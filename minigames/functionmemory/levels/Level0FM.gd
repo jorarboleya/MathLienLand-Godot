@@ -15,7 +15,7 @@ var scoreLabel
 var timerLabel
 var movesLabel
 var resetButton
-var goal = 5 
+var goal = 5
 
 #Se establecen todos los valores iniciales del juego
 func _ready():
@@ -38,11 +38,11 @@ func _exit_tree():
 
 func setUpTimers():
 	#Se conectan y se inicializan los temporizadores. Se añaden a la escena principal
-	var _ret = $FlipTimer.connect("timeout", self, "turnOverCards")
+	var _ret = $FlipTimer.connect("timeout", self , "turnOverCards")
 	# $FlipTimer.set_one_shot(true)
-	_ret = $MatchTimer.connect("timeout", self, "matchCardsAndScore")
+	_ret = $MatchTimer.connect("timeout", self , "matchCardsAndScore")
 	# $MatchTimer.set_one_shot(true)
-	_ret = $SecondsTimer.connect("timeout", self, "countSeconds")
+	_ret = $SecondsTimer.connect("timeout", self , "countSeconds")
 	$SecondsTimer.start()
 
 func countSeconds():
@@ -53,12 +53,12 @@ func countSeconds():
 #Se reinicia el juego
 func resetGame():
 	#Se liberan los recursos de la ya existente baraja
-	for c in range (deck.size()):
+	for c in range(deck.size()):
 		deck[c].queue_free()
 	deck.clear()
 	#Se establecen todos los valores de la barra de estado a 0
-	score = 0 
-	seconds = 0 
+	score = 0
+	seconds = 0
 	moves = 0
 	#Se reinician los temporizadores
 	# No es necesario pues con conectar
@@ -89,7 +89,7 @@ func setUpHUD():
 
 func fillDeck():
 	#s = primer valor de la carta (1: las graficas, 2: las funciones)
-	var s = 1 
+	var s = 1
 	#v = segundo valor (las diferentes graficas/funciones que hay)
 	var v = 1
 	while s < 3:
@@ -158,12 +158,14 @@ func matchCardsAndScore():
 	card2 = null
 	#Si se alcanza el objetivo, se instancia el pop up final y se gana el juego
 	if score == goal:
+		Global.start_session("functionmemory")
 		# Establecemos las variables globales
 		# para que los datos puedan pasarse a
 		# la pantalla final del minijuego.
 		Global.total_memory_time = seconds
 		Global.memory_score = score
 		Global.flipped_pairs_number = moves
+		Global.end_session()
 		var _ret = get_tree().change_scene("res://minigames/functionmemory/ui/EndScreenFM.tscn")
 		#var winScreen = popUp.instantiate()
 		#Game.add_child(winScreen)

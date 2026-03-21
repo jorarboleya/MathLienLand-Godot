@@ -19,6 +19,7 @@ func _enter_tree():
 	# Establecemos el final de la cadena en bbcode.
 	info.bbcode_text += default_end_bbtext
 	
+	Global.end_session()
 	# Reseteamos las variables globales del minijuego
 	Global.meteor_score = 0
 	Global.total_meteors_time = 0
@@ -29,4 +30,3 @@ func _on_Continue_button_up():
 	# implique moverse a distintas escenas segun hayan mas niveles, se
 	# este en modo historia, etc.
 	var _ret = get_tree().change_scene("res://minigames/decimalsystemmeteors/ui/StartScreenDSM.tscn")
-

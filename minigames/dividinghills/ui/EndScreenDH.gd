@@ -22,6 +22,7 @@ func _enter_tree():
 	
 	# Reseteamos las variables que participan en el minijuego correspondiente
 	# como contadores.
+	Global.end_session()
 	Global.ncorrect_hills = 0
 	Global.total_hills_questions = 0
 	Global.total_hills_time = 0
@@ -33,5 +34,3 @@ func _on_Continue_button_up():
 	# implique moverse a distintas escenas segun hayan mas niveles, se
 	# este en modo historia, etc.
 	var _ret = get_tree().change_scene("res://minigames/dividinghills/ui/StartScreenDH.tscn")
-
-

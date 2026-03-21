@@ -3,12 +3,12 @@ extends Node2D
 # Escenas que representan a los 3 tipos de enemigos que 
 # presenta el juego. En nuestro caso son fantasmas, slimes 
 # y aranyas.
-export (PackedScene) var Enemy_1
-export (PackedScene) var Enemy_2
-export (PackedScene) var Enemy_3
+export(PackedScene) var Enemy_1
+export(PackedScene) var Enemy_2
+export(PackedScene) var Enemy_3
 
 # Escena que contiene la logica de los coleccionables
-export (PackedScene) var Pickup
+export(PackedScene) var Pickup
 
 # Capa del mapa que indica la posicion de los items.
 onready var items = $Items
@@ -40,7 +40,7 @@ func _ready():
 	set_camera_limits()
 	# Nombres dados a los marcadores de las posiciones
 	# de las puertas.
-	var door_frames_names = ['doorframeA', 
+	var door_frames_names = ['doorframeA',
 	"doorframeB", "doorframeC", "doorframeD"]
 	
 	#for cell in $Walls.get_used_cells():
@@ -71,14 +71,16 @@ func _ready():
 	# Conectamos las senyales con las funciones que las procesaran.
 	
 	var _ret
-	_ret = $Player.connect("labyrinth_dead", self, "start_over")
-	_ret = $Player.connect("labyrinth_answerA", self, "_on_Player_answered_a")
-	_ret = $Player.connect("labyrinth_answerB", self, "_on_Player_answered_b")
-	_ret = $Player.connect("labyrinth_answerC", self, "_on_Player_answered_c")
-	_ret = $Player.connect("labyrinth_answerD", self, "_on_Player_answered_d")
+	_ret = $Player.connect("labyrinth_dead", self , "start_over")
+	_ret = $Player.connect("labyrinth_answerA", self , "_on_Player_answered_a")
+	_ret = $Player.connect("labyrinth_answerB", self , "_on_Player_answered_b")
+	_ret = $Player.connect("labyrinth_answerC", self , "_on_Player_answered_c")
+	_ret = $Player.connect("labyrinth_answerD", self , "_on_Player_answered_d")
 	
+	Global.start_session("labyrinthofrule3")
 	# Establecemos la pregunta y sus opciones en la interfaz de usuario.
 	set_question_hud()
+
 	
 func _enter_tree():
 	# Cada vez que la escena entra al arbol del proyecto, ponemos el tiempo
@@ -111,7 +113,7 @@ func spawn_items():
 		# Obtenemos la posicion central de la celda mediante
 		# su punto inicial (map_to_world) y la mitad del tamanio
 		# de una celda.
-		var pos = items.map_to_world(cell) + items.cell_size/2
+		var pos = items.map_to_world(cell) + items.cell_size / 2
 		# Ahora procedemos a ver que tipo de item es:
 		match type:
 			"enemies_spawner1":
@@ -145,7 +147,7 @@ func spawn_items():
 				# instanciamos la escena correspondiente
 				# e inicializamos dicha instancia para 
 				# posteriormente anyadirla a la escena.
-				var answer_flag =  Pickup.instance()
+				var answer_flag = Pickup.instance()
 				answer_flag.init(type, pos)
 				add_child(answer_flag)
 			"player_spawner":
@@ -160,11 +162,11 @@ func start_over():
 	$Player.set_process(false)
 	$Player.move_allowed = false
 	$Player.hide()
-	yield(get_tree().create_timer(1.5), 'timeout')
+	yield (get_tree().create_timer(1.5), 'timeout')
 	$Player.position = $StartingPoint.position
 	$Player/AnimationPlayer.play_backwards("die")
 	$Player.show()
-	yield($Player/AnimationPlayer, 'animation_finished')
+	yield ($Player/AnimationPlayer, 'animation_finished')
 	$Player.move_allowed = true
 	$Player.set_process(true)
 	$Player/CollisionShape2D.set_deferred("disabled", false)
@@ -190,20 +192,21 @@ func _on_Player_answered_d():
 func check_answer(answer):
 	# Funcion para comprobar si la opcion elegida ha sido la
 	# correcta. 
-	
 	# Comprobamos que la clave indicada sea valida.
 	if not answer in answers:
 		return
 	
 	# Comprobamos si la opcion elegida es correcta.
 	var correct = Global.labyrinth_questions[Global.current_labyrinth_question][answer][1]
+	var q_id = "lr3_" + str(Global.current_labyrinth_question)
+	Global.record_answer(q_id, correct, 0)
 	
 	# Si es correcta, procedemos a ejecutar el sonido 
 	# de opcion correcta, esperamos a que termine e iniciamos
 	# el procedimiento de cambio de pregunta.
 	if correct:
 		$CorrectSound.play()
-		yield($CorrectSound, "finished")
+		yield ($CorrectSound, "finished")
 		next_question()
 	else:
 		# Si no fue correcta la opcion, colocamos la puerta correspondiente,
@@ -212,6 +215,7 @@ func check_answer(answer):
 		var door_id = $Walls.tile_set.find_tile_by_name(door_ids[answer][0])
 		$Walls.set_cellv(door_frames[door_ids[answer][1]], door_id)
 		start_over()
+	
 
 func next_question():
 	# Para proceder a la siguiente pregunta, en primer lugar pausamos el juego
@@ -222,18 +226,18 @@ func next_question():
 	# Mostramos la explicacion
 	$CanvasLayer/Explanation.visible = true
 	# Esperamos a que el usuario cierre la explicacion.
-	yield($CanvasLayer/Explanation/MarginContainer/VBoxContainer/CloseExplanationBtn, "button_up")
+	yield ($CanvasLayer/Explanation/MarginContainer/VBoxContainer/CloseExplanationBtn, "button_up")
 	# Dejamos de mostrar la explicacion
 	$CanvasLayer/Explanation.visible = false
 	# Reanudamos el juego
 	get_tree().paused = false
 	# Avanzamos en las preguntas
-	Global.current_labyrinth_question+=1
+	Global.current_labyrinth_question += 1
 	# Comprobamos si era la ultima pregunta disponible o no.
 	if Global.current_labyrinth_question >= Global.num_labyrinth_questions:
 		# Si era la ultima pregunta disponible, reseteamos la pregunta actual
 		# para el siguiente juego.
-		Global.current_labyrinth_question=0
+		Global.current_labyrinth_question = 0
 		# Cambiamos a la escena final.
 		var _ret = get_tree().change_scene("res://minigames/labyrinthofrule3/ui/EndScreenLR3.tscn")
 	else:
@@ -251,10 +255,11 @@ func set_question_hud():
 	$CanvasLayer/HUD/B/Answer.text = Global.labyrinth_questions[Global.current_labyrinth_question]["answerB"][0]
 	$CanvasLayer/HUD/C/Answer.text = Global.labyrinth_questions[Global.current_labyrinth_question]["answerC"][0]
 	$CanvasLayer/HUD/D/Answer.text = Global.labyrinth_questions[Global.current_labyrinth_question]["answerD"][0]
+	Global.start_question_timer()
 
 # Funcion que realiza el conteo del tiempo que el usuario esta jugando 
 # juego. Su funcion consiste en, cada segundo, aumentar el contador de
 # segundos del script global y mostrar el total en pantalla.
 func _on_Timer_timeout():
-	Global.total_labyrinth_time+=1
+	Global.total_labyrinth_time += 1
 	$CanvasLayer/HUD/Time.text = str(Global.total_labyrinth_time)

@@ -3,15 +3,15 @@
 extends Node2D
 
 # Variables para obtener las escenas necesarias para instanciar.
-export (PackedScene) var enemy_scene
-export (PackedScene) var collectible_scene
+export(PackedScene) var enemy_scene
+export(PackedScene) var collectible_scene
 # Decremento que se producira en el periodo del reloj
 # instanciador de enemigos periodicamente
-export (float) var time_btwn_enemies_decrement = 0.5
+export(float) var time_btwn_enemies_decrement = 0.5
 # Tiempo minimo entre aparicion de enemigos
-export (float) var minimum_time_btwn_enemies = 0.1
+export(float) var minimum_time_btwn_enemies = 0.1
 # Recompensa dada con cada pregunta acertada.
-export (float) var reward_time_bonus = 1.0
+export(float) var reward_time_bonus = 1.0
 
 onready var coin_starting_pos = $GameLayer/CoinsSpawningPoint.position
 onready var enemies_starting_pos = $GameLayer/EnemiesSpawningPoint.position
@@ -32,15 +32,17 @@ func _ready():
 	$GameLayer/EnemiesTimer.start()
 	$GameLayer/DifficultyTimer.start()
 	# Conectamos las senyales.
-	var _ret = $GameLayer/Player.connect("reward", self, "rewardPlayer")
-	_ret = $GameLayer/Player.connect("killplayer", self, "newOperation")
-	_ret = $GameLayer/Operation.connect("continuegame", self, "continue_game")
-	_ret = $GameLayer/Operation.connect("gameover", self, "game_over")
+	var _ret = $GameLayer/Player.connect("reward", self , "rewardPlayer")
+	_ret = $GameLayer/Player.connect("killplayer", self , "newOperation")
+	_ret = $GameLayer/Operation.connect("continuegame", self , "continue_game")
+	_ret = $GameLayer/Operation.connect("gameover", self , "game_over")
 	
 	# Inicializamos las variables globales.
 	Global.total_runner_time = 0
 	Global.runner_score = 0
 	Global.ncorrect_runner = 0
+
+	Global.start_session("endlessrunner")
 
 func _on_Timer_timeout():
 	# Se suma un segundo al tiempo del minijuego
@@ -83,14 +85,17 @@ func newOperation():
 	$GameLayer/EnemiesTimer.stop()
 	$GameLayer/DifficultyTimer.stop()
 	get_tree().call_group("collidable", "queue_free")
+
+	Global.start_question_timer()
 	
 	
 func continue_game():
+	Global.record_answer("mer_" + str(Global.ncorrect_runner), true, 0)
 	# Esta funcion se llama tras la correcta contestacion
 	# a la operacion formulada. Se encarda de reanudar el juego,
 	# reiniciando los temporizadores de spawn, mostrando al jugador
 	# y aplicando la bonificacion pertinente.
-	Global.ncorrect_runner += 1 
+	Global.ncorrect_runner += 1
 	can_move = true
 	$GameLayer/Player.visible = true
 	$GameLayer/Operation.visible = false
@@ -102,6 +107,7 @@ func continue_game():
 	
 	
 func game_over():
+	Global.record_answer("mer_" + str(Global.ncorrect_runner), false, 0)
 	# Si se ha concluido el minijuego, pasamos  a la escena final.
 	var _ret = get_tree().change_scene("res://minigames/endlessrunner/ui/EndScreenMER.tscn")
 
@@ -110,7 +116,7 @@ func _on_DifficultyTimer_timeout():
 	# Esta funcion decrementara periodicamente el intervalo
 	# entre aparicion de enemigos de tal forma que se aumente la dificultad.
 	var actual_enemy_wait_time = $GameLayer/EnemiesTimer.wait_time
-	if actual_enemy_wait_time - time_btwn_enemies_decrement > minimum_time_btwn_enemies: 
+	if actual_enemy_wait_time - time_btwn_enemies_decrement > minimum_time_btwn_enemies:
 		$GameLayer/EnemiesTimer.wait_time -= time_btwn_enemies_decrement
 	else:
 		$GameLayer/EnemiesTimer.wait_time = minimum_time_btwn_enemies

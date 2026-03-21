@@ -2,15 +2,15 @@ extends Node2D
 
 # Variable que indica cuantas colinas
 # se generaran cada vez
-export (int) var num_hills = 6
+export(int) var num_hills = 6
 # Numero de puntos para definir cada colida
-export (int) var hill_slices = 10
+export(int) var hill_slices = 10
 # Altura maxima de una colina.
-export (int) var hill_height_range = 150
+export(int) var hill_height_range = 150
 # Maximo preguntas que se haran en el juego
-export (int) var max_questions = 15
+export(int) var max_questions = 15
 # Escena que representa al objeto coleccionable
-export (PackedScene) var collectible
+export(PackedScene) var collectible
 #Textura de las colinas
 var hills_texture = preload("res://assets/hills/grass.png")
 # Numeros de los cuales sus criterios de
@@ -22,8 +22,8 @@ var max_multiplicator = 500
 # en principio.
 var max_gcd = 25
 # Diccionaro empleado para mostrar y tratar las preguntas.
-var current_question = {"type": 0, "text": "", "correct_answer":-1,
-						"options":{"A":"", "B":"", "C":"", "D":""}}
+var current_question = {"type": 0, "text": "", "correct_answer": - 1,
+						"options": {"A": "", "B": "", "C": "", "D": ""}}
 # El tam de la pantalla
 var screensize
 # Los puntos que iran constituyendo las colinas
@@ -39,6 +39,7 @@ var time = 0
 var restart_timer = false
 
 func _ready():
+	Global.start_session("dividinghills")
 	# En primer lugar, cuando la escena entre al 
 	# arbol de dependencias tendremos que resetar 
 	# todos los contadores.
@@ -55,20 +56,20 @@ func _ready():
 	randomize()
 	# Conectamos las senyales de contestacion
 	var _ret
-	_ret = $CanvasLayer/HUDDH.connect("hills_answerA", self, "_on_Player_answered_a")
-	_ret = $CanvasLayer/HUDDH.connect("hills_answerB", self, "_on_Player_answered_b")
-	_ret = $CanvasLayer/HUDDH.connect("hills_answerC", self, "_on_Player_answered_c")
-	_ret = $CanvasLayer/HUDDH.connect("hills_answerD", self, "_on_Player_answered_d")
+	_ret = $CanvasLayer/HUDDH.connect("hills_answerA", self , "_on_Player_answered_a")
+	_ret = $CanvasLayer/HUDDH.connect("hills_answerB", self , "_on_Player_answered_b")
+	_ret = $CanvasLayer/HUDDH.connect("hills_answerC", self , "_on_Player_answered_c")
+	_ret = $CanvasLayer/HUDDH.connect("hills_answerD", self , "_on_Player_answered_d")
 	# Y la senyal de game over
-	_ret = $Player.connect("game_over", self, "game_over")
+	_ret = $Player.connect("game_over", self , "game_over")
 	# Generamos las primeras colinas
 	hills = Array()
 	screensize = get_viewport().get_visible_rect().size
 	
 	# Anyadimos una altura extra al starting point desde
 	# -hill_height_range hasta hill_height_range.
-	var extra_starting_height = -hill_height_range + randi()%(hill_height_range*2)
-	var start_height = screensize.y * 3/4 + extra_starting_height
+	var extra_starting_height = - hill_height_range + randi() % (hill_height_range * 2)
+	var start_height = screensize.y * 3 / 4 + extra_starting_height
 	# Equiparamos el decorado al offset de la camara y a la 
 	# altura inicial de las colinas.
 	$ParallaxBackground/Decorations.position.x = 0
@@ -95,13 +96,13 @@ func _process(_delta):
 	# y el dicho punto colocamos un objeto
 	# coleccionable. Finalmente, conectamos
 	# su recolectado con la funcion correspondiente.
-	if target_x < $Player.position.x + screensize.x*4:
+	if target_x < $Player.position.x + screensize.x * 4:
 		generate_hills()
 		var pickup = collectible.instance()
-		pickup.position = Vector2(target_x, target_y-32)
+		pickup.position = Vector2(target_x, target_y - 32)
 		add_child(pickup)
-		var _ret 
-		_ret = pickup.connect("chest_collected", self, "pop_up_question")
+		var _ret
+		_ret = pickup.connect("chest_collected", self , "pop_up_question")
 	
 func generate_hills():
 	# Idea general de creacion procedural del terreno obtenida 
@@ -112,8 +113,7 @@ func generate_hills():
 	# Cuanto puede ocupar como maximo una colina y su alrededor.
 	# Modificacion relevante: hills_width, realizada con el objetivo
 	# de generar mas colinas cada vez.
-	
-	var hills_width = screensize.x*4 / num_hills
+	var hills_width = screensize.x * 4 / num_hills
 	var hill_slice_width = hills_width / hill_slices
 	# El nuevo punto empezara tras el ultimo
 	var starting_point = hills[-1]
@@ -131,7 +131,7 @@ func generate_hills():
 		for hill_slice in range(hill_slice_width):
 			var hill_point = Vector2()
 			hill_point.x = starting_point.x + hill_slice * hill_slices + hills_width * new_hill
-			hill_point.y = starting_point.y + hill_height * cos(2 * PI/ hill_slice_width * hill_slice)
+			hill_point.y = starting_point.y + hill_height * cos(2 * PI / hill_slice_width * hill_slice)
 			hills.append(hill_point)
 			polygon.append(hill_point)
 		starting_point.y += hill_height
@@ -142,8 +142,8 @@ func generate_hills():
 	# Anyadimos la forma de colision a las colinas
 	$StaticBody2D.add_child(shape)
 	# Anyadimos puntos de cerrado del poligono
-	polygon.append(Vector2(hills[-1].x, screensize.y*5))
-	polygon.append(Vector2(starting_point.x, screensize.y*5))
+	polygon.append(Vector2(hills[-1].x, screensize.y * 5))
+	polygon.append(Vector2(starting_point.x, screensize.y * 5))
 	shape.polygon = polygon
 	hill_grass.polygon = polygon
 	hill_grass.texture = hills_texture
@@ -155,7 +155,6 @@ func set_question():
 	# los mas importantes. En un futuro estaria
 	# bien anyadir preguntas del mcm, numeros primos
 	# etc.
-		
 	# Obtenemos los botones de respuesta.
 	var node_a = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/HBoxContainer/A
 	var node_b = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/HBoxContainer/B
@@ -163,7 +162,7 @@ func set_question():
 	var node_d = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/HBoxContainer/D
 	# Decidimos el tipo de pregunta de entre los dos
 	# que hay
-	var selector = randi()%2
+	var selector = randi() % 2
 	# Si se decide el tipo 0, de criterios de 
 	# divisibilidad, simplemente dejamos disponibles
 	# dos botones de respuesta porque solo se podra
@@ -202,7 +201,7 @@ func set_divisibility_criteria_question():
 	# Aleatoreamente vemos si queremos que la 
 	# pregunta deba responderse con verdadero 
 	# o con falso.
-	var aselector = randi()%2
+	var aselector = randi() % 2
 	if aselector == 0:
 		# Si queremos que sea falso, sumamos uno
 		# al multiplo obtenido de tal forma que
@@ -228,16 +227,16 @@ func set_gcd_question():
 	var b = 1
 	# No pueden ser iguales ni tampoco 
 	# divisibles entre si.
-	while a%b==0 or b%a==0:
-		a = randi()%(gcd - 2) + 2 
+	while a%b == 0 or b%a == 0:
+		a = randi() % (gcd - 2) + 2
 		b = a
-		while b == a: 
-			b = randi()%(gcd - 2) + 2 
+		while b == a:
+			b = randi() % (gcd - 2) + 2
 	
 	# Los multiplicamos por el gcd elegido
 	# para obtener los dos numeros de la pregunta
-	var first_number = a*gcd
-	var second_number = b*gcd
+	var first_number = a * gcd
+	var second_number = b * gcd
 	
 	# Observamos si exiten factores entre los numeros
 	# multiplicados por gcd para asegurarnos de obtener el gcd
@@ -248,12 +247,12 @@ func set_gcd_question():
 	# Establecemos como posibles respuestas a y b 
 	# ademas de gcd pues no seran numeros conocidos
 	# para el jugador
-	var option_set = {gcd:true, a:true, b:true,}
+	var option_set = {gcd: true, a: true, b: true, }
 	# Calculamos la ultima opcion aleatoreamente
 	# entre 2 y 2*gcd, aproximadamente
 	while option_set.keys().size() < 4:
-		var new_option = randi()%(gcd*2) + 2 
-		option_set[new_option]=true
+		var new_option = randi() % (gcd * 2) + 2
+		option_set[new_option] = true
 	
 	# Rellenamos datos de la pregunta segun lo anteriomente
 	# calculado, asegurandonos que las opciones
@@ -261,7 +260,7 @@ func set_gcd_question():
 	current_question["type"] = 1
 	current_question["text"] = "Select the gcd of " + str(first_number) + " and " + str(second_number) + ":"
 	current_question["correct_answer"] = gcd
-	var option_list =  option_set.keys()
+	var option_list = option_set.keys()
 	option_list.shuffle()
 	current_question["options"]["A"] = str(option_list[0])
 	current_question["options"]["B"] = str(option_list[1])
@@ -277,7 +276,7 @@ func _on_Player_answered_a():
 	# la opcion que el jugador ha seleccionado
 	# como respuesta a un numero para que pueda
 	# ser comprobado.
-	if current_question["type"]==0:
+	if current_question["type"] == 0:
 		check_answer(0)
 	else:
 		check_answer(int(current_question["options"]["A"]))
@@ -286,7 +285,7 @@ func _on_Player_answered_b():
 	# Se realiza lo mismo que en el caso de la
 	# opcion A
 	disable_player_answer()
-	if current_question["type"]==0:
+	if current_question["type"] == 0:
 		check_answer(1)
 	else:
 		check_answer(int(current_question["options"]["B"]))
@@ -305,6 +304,9 @@ func _on_Player_answered_d():
 	check_answer(int(current_question["options"]["D"]))
 
 func check_answer(answer):
+	var q_id = "dh_" + str(Global.total_hills_questions)
+	var is_correct = (answer == current_question["correct_answer"])
+	Global.record_answer(q_id, is_correct, 0)
 	# Aumentamos en 1 el numero de preguntas respondidas.
 	Global.total_hills_questions += 1
 	# Comprobamos si en este punto el temporizador
@@ -348,7 +350,7 @@ func check_answer(answer):
 	enable_player_answer()
 	# Esperamos que el jugador presione continuar en la 
 	# pantalla de feedback
-	yield($CanvasLayer/HUDDH, "continue_pressed")
+	yield ($CanvasLayer/HUDDH, "continue_pressed")
 	# Y ocultamos los paneles de preguntas, permitimos
 	# el movimiento y, si procede, reaunadomos el timer de
 	# game over
@@ -380,7 +382,7 @@ func euclidean_gcd(n1, n2):
 	# Funcion que plasma el algoritmo euclideo
 	# para calcular el gcd de dos numeros.
 	var aux
-	while n2!=0:
+	while n2 != 0:
 		aux = n2
 		n2 = n1%n2
 		n1 = aux
@@ -400,6 +402,8 @@ func pop_up_question():
 		$Player/GameOverTimer.stop()
 	$CanvasLayer/HUDDH/MarginContainer/Panel.visible = true
 
+	Global.start_question_timer()
+
 func game_over():
 	# Cuando el temporizador de game over termina, 
 	# cambiamos a la escena final
@@ -413,5 +417,5 @@ func _on_Timer_timeout():
 	# Contamos el tiempo de juego y 
 	# lo mostramos
 	time += 1
-	Global.total_hills_time+=1
+	Global.total_hills_time += 1
 	$CanvasLayer/HUDDH.set_time(time)

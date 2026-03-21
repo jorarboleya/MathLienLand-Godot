@@ -163,3 +163,34 @@ func fill_race_questions():
 	
 	race_questions = [question1, question2, question3, question4, question5, question6, question7, question8]
 	
+var session_minigame: String = ""
+var session_start_time: int = 0
+var session_answers: Array = []
+var question_start_time: int = 0
+
+func start_session(minigame: String) -> void:
+	session_minigame = minigame
+	session_start_time = OS.get_unix_time()
+	session_answers = []
+
+func start_question_timer() -> void:
+	question_start_time = OS.get_unix_time()
+
+func record_answer(question_id: String, correct: bool, difficulty: int) -> void:
+	var elapsed_time = OS.get_unix_time() - question_start_time
+	session_answers.append({
+		"question_id": question_id,
+		"correct": correct,
+		"time": elapsed_time,
+		"difficulty": difficulty
+	})
+
+func end_session() -> void:
+	var session_time = OS.get_unix_time() - session_start_time
+	var data = {
+		"minigame": session_minigame,
+		"duration": session_time,
+		"answers": session_answers
+	}
+	if OS.has_feature("JavaScript"):
+		JavaScript.eval("window.saveFullGame(" + to_json(data) + ")")

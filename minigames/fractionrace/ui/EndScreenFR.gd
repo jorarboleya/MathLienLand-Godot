@@ -17,7 +17,7 @@ func _enter_tree():
 	# tenemos que comprobar que la musica tocada sea la correcta.
 	MusicController.set_music()
 	# Obtenemos la posicion y preparamos la forma en la que se dira:
-	var pos_string=""
+	var pos_string = ""
 	if Global.final_position == 1:
 		pos_string = "You Ranked First!!"
 		color_to_set = gold_color
@@ -35,7 +35,7 @@ func _enter_tree():
 		color_to_set = red_color
 		image = path_to_stars + "rock.png"
 	else:
-		pos_string="ERROR!!"
+		pos_string = "ERROR!!"
 		color_to_set = red_color
 		image = path_to_stars + "rock.png"
 		
@@ -47,10 +47,10 @@ func _enter_tree():
 	# Formateamos el mensaje para indicar al jugador la posicion en la
 	# que completo el minijuego.
 	
-	position_lab.bbcode_text = default_start_position 
-	position_lab.bbcode_text += "[img]"+ image +"[/img]"
-	position_lab.bbcode_text += pos_string 
-	position_lab.bbcode_text += "[img]"+ image +"[/img]" + "[/rainbow][/center]"
+	position_lab.bbcode_text = default_start_position
+	position_lab.bbcode_text += "[img]" + image + "[/img]"
+	position_lab.bbcode_text += pos_string
+	position_lab.bbcode_text += "[img]" + image + "[/img]" + "[/rainbow][/center]"
 	
 	# Obtenemos el nodo donde se mostrara el mensaje de fin de juego al 
 	# jugador
@@ -60,10 +60,10 @@ func _enter_tree():
 	# para completar el minijuego, asi como las preguntas respondidas.
 	
 	info_lab.bbcode_text = default_start_time_info
-	info_lab.bbcode_text += color_to_set 
+	info_lab.bbcode_text += color_to_set
 	info_lab.bbcode_text += default_time_info
-	info_lab.bbcode_text += str(Global.total_race_time) 
-	info_lab.bbcode_text +=  " seconds, answering correctly to " 
+	info_lab.bbcode_text += str(Global.total_race_time)
+	info_lab.bbcode_text += " seconds, answering correctly to "
 	info_lab.bbcode_text += str(Global.current_race_question)
 	info_lab.bbcode_text += " questions![/color][/wave][/center]"
 	
@@ -71,6 +71,8 @@ func _enter_tree():
 	if Global.final_position == 1 or Global.final_position == 2:
 		$Applause.play()
 	
+	Global.end_session()
+
 	# Reseteamos las variables que participan en el minijuego de la carrera
 	# como contadores.
 	Global.total_race_time = 0
@@ -84,5 +86,3 @@ func _on_Continue_button_up():
 	# implique moverse a distintas escenas segun hayan mas niveles, se
 	# este en modo historia, etc.
 	var _ret = get_tree().change_scene("res://minigames/fractionrace/ui/StartScreenFR.tscn")
-
-

@@ -2,22 +2,22 @@ extends Node2D
 # Variable para introducir la escena del
 # meteorito que se empleara para crear
 # instancias
-export (PackedScene) var meteor_scene
+export(PackedScene) var meteor_scene
 # Variable que limita el maximo numero que puede
 # aparecer en el juego.
-export (float) var max_number = 1000.00
+export(float) var max_number = 1000.00
 # Variable que limita el minimo numero que puede
 # aparecer en el juego.
-export (float) var min_number = 0.001
+export(float) var min_number = 0.001
 # Variable que permite establecer la reduccion
 # en tiempo tras respuestas correctas. Con ello,
 # ayuda a delimitar la dificultad.
-export (float) var step_apparition_meteors = 0.5
+export(float) var step_apparition_meteors = 0.5
 # Variable que indica cada cuantas instancias incorrectas
 # como maximo se debe crear una instancia correcta.
-export (int) var max_span_correct_answer = 5
+export(int) var max_span_correct_answer = 5
 # Variable que indica la maxima longitud de un numero
-export (int) var max_number_length = 6
+export(int) var max_number_length = 6
 
 # Constante que indica el exponente cubico.
 const CUBIC_EXP = 3
@@ -43,11 +43,11 @@ onready var empty_heart = load("res://assets/meteors/platformPack_item005.png")
 # que representan cada unidad usada en el juego. Como ultimo
 # elemento de la lista valor tendremos el exponente de 10 sobre
 # el que se realizan las conversiones de una unidad a otra.
-var units = {	"mass":["mg", "cg", "dg", "g", "dag", "hg", "kg", LINEAR_EXP], # Mass
-				"length":["mm", "cm", "dm", "m", "dam", "hm", "km", LINEAR_EXP], # Length
-				"area":["mm", "cm", "dm", "m", "dam", "hm", "km", SQ_EXP], # Area
-				"vol":["mm", "cm", "dm", "m", "dam", "hm", "km", CUBIC_EXP], # Vol in meters
-				"voll":["ml", "cl", "dl", "l", "dal", "hl", "kl", LINEAR_EXP]} # Vol in liters
+var units = {"mass": ["mg", "cg", "dg", "g", "dag", "hg", "kg", LINEAR_EXP], # Mass
+				"length": ["mm", "cm", "dm", "m", "dam", "hm", "km", LINEAR_EXP], # Length
+				"area": ["mm", "cm", "dm", "m", "dam", "hm", "km", SQ_EXP], # Area
+				"vol": ["mm", "cm", "dm", "m", "dam", "hm", "km", CUBIC_EXP], # Vol in meters
+				"voll": ["ml", "cl", "dl", "l", "dal", "hl", "kl", LINEAR_EXP]} # Vol in liters
 # Magnitudes consideradas.
 var magnitudes = ["mass", "length", "area", "vol", "voll"]
 # Equivalencias entre unidades.
@@ -55,9 +55,9 @@ var equivalents = {
 	"m[sup][b]3[/b][/sup]": "kl",
 	"dm[sup][b]3[/b][/sup]": "l",
 	"cm[sup][b]3[/b][/sup]": "ml",
-	"kl":"m[sup][b]3[/b][/sup]",
-	"l":"dm[sup][b]3[/b][/sup]",
-	"ml":"cm[sup][b]3[/b][/sup]",
+	"kl": "m[sup][b]3[/b][/sup]",
+	"l": "dm[sup][b]3[/b][/sup]",
+	"ml": "cm[sup][b]3[/b][/sup]",
 }
 # Numero actual.
 var cur_value
@@ -79,24 +79,24 @@ func _ready():
 	randomize()
 	# Establecemos correctamente las unidades que tendremos
 	# en cuenta.
-	for j in range(len(units["area"])-1):
+	for j in range(len(units["area"]) - 1):
 		units["area"][j] = add_superindex(units["area"][j], SQ_EXP)
 	
-	for j in range(len(units["vol"])-1):
+	for j in range(len(units["vol"]) - 1):
 		units["vol"][j] = add_superindex(units["vol"][j], CUBIC_EXP)
 
 	# Conectamos las senyales
-	var _ret = $CanvasLayer/Player.connect("correct_answer", self, "correct_answer")
-	_ret = $CanvasLayer/Player.connect("wrong_answer", self, "wrong_answer")
+	var _ret = $CanvasLayer/Player.connect("correct_answer", self , "correct_answer")
+	_ret = $CanvasLayer/Player.connect("wrong_answer", self , "wrong_answer")
 	
 	# Establecemos la pregunta a realizar.
 	set_question()
+	Global.start_session("decimalsystemmeteors")
 
 
 func _on_MeteorTimer_timeout():
 	# Idea plenamente obtenida de:
 	# https://www.youtube.com/watch?v=TKpTvpeHh3U
-	
 	# Establecemos un punto aleatorio de spawn de la instancia.
 	$MeteorPath/PathFollow2D.set_unit_offset(randf())
 	
@@ -110,9 +110,9 @@ func _on_MeteorTimer_timeout():
 	
 	# Con una rotacion determinada por el punto de spawn y
 	# perpendicular a el.
-	var meteor_dir = $MeteorPath/PathFollow2D.rotation + PI/2
+	var meteor_dir = $MeteorPath/PathFollow2D.rotation + PI / 2
 	# Modificamos la direccion ligeramente para dar mas dinamismo
-	meteor_dir += rand_range(-PI/5, PI/5)
+	meteor_dir += rand_range(-PI / 5, PI / 5)
 	#meteor.rotation = meteor_dir
 	
 	# Establecemos una velocidad de meteorito dentro del minimo y el maximo
@@ -141,7 +141,7 @@ func _on_MeteorTimer_timeout():
 		# Escogemos una magnitud aleatoria para la opcion que mostrara el meteorito
 		random_magn = magnitudes[randi()%len(magnitudes)]
 		# Escogemos una unidad aleatoria para la opcion que mostrara el meteorito
-		random_unit = units[random_magn][randi()%(len(units[random_magn])-1)]
+		random_unit = units[random_magn][randi() % (len(units[random_magn]) - 1)]
 		# Establecemos si la opcion mostrada por el meteorito es correcta o no.
 		correct_meteor = random_unit == cur_unit or random_unit in cur_equivalent_units.keys()
 		# Si es correcta, reseteamos el contador de aparicion de opciones incorrectas
@@ -164,7 +164,6 @@ func _on_MeteorTimer_timeout():
 func set_question():
 	# Escogemos un numero al azar. Sera el numero que aparezca
 	# en la pregunta.
-	
 	# Numeros iniciales, se sobreescribiran.
 	var question_number = 0
 	var answer_number = 1000000
@@ -185,7 +184,7 @@ func set_question():
 		# Seleccionamos una magnitud a poner en la pregunta.
 		var sel_mag = magnitudes[randi()%len(magnitudes)]
 		# Seleccionamos la unidad de la pregunta.
-		var index_unit = randi()%(len(units[sel_mag])-1)
+		var index_unit = randi() % (len(units[sel_mag]) - 1)
 		var sel_unit = units[sel_mag][index_unit]
 		
 		#question_number = question_number / pow(10, index_unit*units[sel_mag][-1])
@@ -195,13 +194,13 @@ func set_question():
 		# unidad de la pregunta.
 		var answer_unit = index_unit
 		while answer_unit == index_unit:
-			answer_unit = randi()%(len(units[sel_mag])-1)
+			answer_unit = randi() % (len(units[sel_mag]) - 1)
 		
 		# Comprobamos la distancia entre ambas unidades.
 		var distance = answer_unit - index_unit
 		# Convertimos el numero de la pregunta a las unidades
 		# de la respuesta.
-		answer_number = question_number / pow(10, distance*units[sel_mag][-1])
+		answer_number = question_number / pow(10, distance * units[sel_mag][-1])
 		# Establecemos el texto de la question.
 		$CanvasLayer2/HUDDSM.set_question(str(question_number) + sel_unit)
 		# Comprobamos si hay que recalcular la respuesta y su pregunta.
@@ -226,7 +225,11 @@ func set_question():
 			else:
 				cur_equivalent_units.clear()
 
+	Global.start_question_timer()
+
 func correct_answer():
+	var q_id = "dsm_" + str(Global.meteor_score)
+	Global.record_answer(q_id, true, 0)
 	# Si se ha colisionado con una opcion correcta.
 	# Aumentamos la puntuacion del jugador y lo
 	# mostramos por pantalla.
@@ -275,7 +278,7 @@ func wrong_answer():
 		$MeteorTimer.stop()
 		# Esperamos el tiempo indicado para cambiar de escena y tras
 		# eso cambiamos de escena.
-		yield(get_tree().create_timer(CHANGING_SCENE_TIME), "timeout")
+		yield (get_tree().create_timer(CHANGING_SCENE_TIME), "timeout")
 		var _ret = get_tree().change_scene("res://minigames/decimalsystemmeteors/ui/EndScreenDSM.tscn")
 
 

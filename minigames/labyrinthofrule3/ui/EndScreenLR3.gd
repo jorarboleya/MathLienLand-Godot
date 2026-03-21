@@ -13,6 +13,7 @@ func _enter_tree():
 	node.text = node.text.format({"seconds": str(Global.total_labyrinth_time)})
 	# Reseteamos las variables que participan en el minijuego del laberinto
 	# como contadores.
+	Global.end_session()
 	Global.total_labyrinth_time = 0
 	Global.current_labyrinth_question = 0
 	
@@ -23,5 +24,3 @@ func _on_Continue_button_up():
 	# implique moverse a distintas escenas segun hayan mas niveles, se
 	# este en modo historia, etc.
 	var _ret = get_tree().change_scene("res://minigames/labyrinthofrule3/ui/StartScreenLR3.tscn")
-
-

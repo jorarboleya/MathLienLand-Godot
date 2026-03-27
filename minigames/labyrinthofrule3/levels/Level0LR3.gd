@@ -77,7 +77,9 @@ func _ready():
 	_ret = $Player.connect("labyrinth_answerC", self , "_on_Player_answered_c")
 	_ret = $Player.connect("labyrinth_answerD", self , "_on_Player_answered_d")
 	
-	Global.start_session("labyrinthofrule3")
+	# Only start a new session on the first question (not on reloads for each question)
+	if Global.current_labyrinth_question == 0:
+		Global.start_session("labyrinthofrule3")
 	# Wait for questions to be fetched from the server if not ready yet
 	if not Global.questions_loaded:
 		yield(Global, "all_questions_loaded")

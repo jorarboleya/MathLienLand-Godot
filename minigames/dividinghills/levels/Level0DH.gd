@@ -150,43 +150,52 @@ func generate_hills():
 	add_child(hill_grass)
 
 func set_question():
-	# Se podrian anyadir mas tipos de preguntas
-	# pero yo decidi que estos dos temas son
-	# los mas importantes. En un futuro estaria
-	# bien anyadir preguntas del mcm, numeros primos
-	# etc.
-	# Obtenemos los botones de respuesta.
 	var node_a = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/HBoxContainer/A
 	var node_b = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/HBoxContainer/B
 	var node_c = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/HBoxContainer/C
 	var node_d = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/HBoxContainer/D
-	# Decidimos el tipo de pregunta de entre los dos
-	# que hay
-	var selector = randi() % 2
-	# Si se decide el tipo 0, de criterios de 
-	# divisibilidad, simplemente dejamos disponibles
-	# dos botones de respuesta porque solo se podra
-	# contestar con si o no.
-	if selector == 0:
-		set_divisibility_criteria_question()
+
+	# Use AI-generated questions if available; otherwise generate procedurally
+	if Global.dh_questions.size() > 0:
+		var idx = Global.dh_question_index % Global.dh_questions.size()
+		Global.dh_question_index += 1
+		_load_ai_dh_question(Global.dh_questions[idx])
+	else:
+		var selector = randi() % 2
+		if selector == 0:
+			set_divisibility_criteria_question()
+		else:
+			set_gcd_question()
+
+	if current_question["type"] == 0:
 		node_c.visible = false
 		node_d.visible = false
 	else:
-		# En otro caso, las 4 respuestas se emplearan
-		# y por ello se establece el contenido de las
-		# dos que no comparte con la anterior opcion
-		set_gcd_question()
 		node_c.visible = true
 		node_d.visible = true
 		node_c.text = current_question["options"]["C"]
 		node_d.text = current_question["options"]["D"]
-	# Ambas tendran un valor para las primeras dos opciones
-	# por lo que se establece.
 	node_a.text = current_question["options"]["A"]
 	node_b.text = current_question["options"]["B"]
-	# Establecemos asimismo el texto de la pregunta.
 	var question = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/Question
 	question.text = current_question["text"]
+
+# Translates an AI-generated question dict into the current_question format
+func _load_ai_dh_question(q):
+	current_question["type"] = int(q["type"])
+	current_question["text"] = str(q["text"])
+	current_question["options"]["A"] = str(q["options"]["A"])
+	current_question["options"]["B"] = str(q["options"]["B"])
+	if int(q["type"]) == 0:
+		current_question["options"]["C"] = ""
+		current_question["options"]["D"] = ""
+		# answer "A" = No = 0, "B" = Yes = 1
+		current_question["correct_answer"] = 0 if str(q["answer"]) == "A" else 1
+	else:
+		current_question["options"]["C"] = str(q["options"]["C"])
+		current_question["options"]["D"] = str(q["options"]["D"])
+		# correct_answer is the actual GCD integer
+		current_question["correct_answer"] = int(str(q["options"][str(q["answer"])]))
 
 func set_divisibility_criteria_question():
 	# Seleccionamos aleatoriamente uno de los 

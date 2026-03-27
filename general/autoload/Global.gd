@@ -1,4 +1,16 @@
 extends Node
+
+# Signal emitted when both question sets have been fetched (or fallen back)
+signal all_questions_loaded
+
+# True once all fetches have completed
+var questions_loaded = false
+var _labyrinth_loaded = false
+var _race_loaded = false
+var _dh_loaded = false
+var _dsm_loaded = false
+var _er_loaded = false
+
 # Variable que contiene las preguntas posibles
 var labyrinth_questions = []
 # Variable que indica que cuestion debe ser propuesta
@@ -8,7 +20,7 @@ var num_labyrinth_questions = 5
 # Tiempo total que el usuario ha jugado.
 var total_labyrinth_time = 0
 
-# Variable que contiene las preguntas posibles 
+# Variable que contiene las preguntas posibles
 # para el juego de carreras
 var race_questions = []
 # Variable que indica que cuestion debe ser propuesta
@@ -43,10 +55,111 @@ var total_runner_time = 0 # Add
 var runner_score = 0
 # -------------------- FIN -----------------------------------------------
 
-# Rellenamos las preguntas con la bateria elegida
+# AI-generated question arrays (Phase 5)
+# Empty by default; filled from server. Minigames fall back to procedural if empty.
+var dh_questions = []   # Dividing Hills
+var dsm_questions = []  # Decimal System Meteors
+var er_questions = []   # Math Endless Runner
+
+# Consumption indices (cycle through AI questions)
+var dh_question_index = 0
+var dsm_question_index = 0
+var er_question_index = 0
+
+# Fetches questions from the server; falls back to hardcoded arrays if the
+# request fails (e.g. server not running during development in the editor).
 func _ready():
-	fill_labyrinth_questions()
-	fill_race_questions()
+	_fetch_questions()
+
+func _fetch_questions():
+	var base_url = "http://localhost:8080"
+	if OS.has_feature("JavaScript"):
+		base_url = JavaScript.eval("window.location.origin")
+
+	var http_lab = HTTPRequest.new()
+	add_child(http_lab)
+	var _r1 = http_lab.connect("request_completed", self, "_on_labyrinth_response", [http_lab])
+	http_lab.request(base_url + "/api/levels/labyrinth")
+
+	var http_race = HTTPRequest.new()
+	add_child(http_race)
+	var _r2 = http_race.connect("request_completed", self, "_on_race_response", [http_race])
+	http_race.request(base_url + "/api/levels/fraction-race")
+
+	var http_dh = HTTPRequest.new()
+	add_child(http_dh)
+	var _r3 = http_dh.connect("request_completed", self, "_on_dh_response", [http_dh])
+	http_dh.request(base_url + "/api/levels/dividing-hills")
+
+	var http_dsm = HTTPRequest.new()
+	add_child(http_dsm)
+	var _r4 = http_dsm.connect("request_completed", self, "_on_dsm_response", [http_dsm])
+	http_dsm.request(base_url + "/api/levels/decimal-meteors")
+
+	var http_er = HTTPRequest.new()
+	add_child(http_er)
+	var _r5 = http_er.connect("request_completed", self, "_on_er_response", [http_er])
+	http_er.request(base_url + "/api/levels/endless-runner")
+
+func _on_labyrinth_response(result, response_code, _headers, body, http_node):
+	http_node.queue_free()
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		var parsed = JSON.parse(body.get_string_from_utf8())
+		if parsed.error == OK:
+			labyrinth_questions = parsed.result["questions"]
+			num_labyrinth_questions = labyrinth_questions.size()
+		else:
+			fill_labyrinth_questions()
+	else:
+		fill_labyrinth_questions()
+	_labyrinth_loaded = true
+	_check_questions_ready()
+
+func _on_race_response(result, response_code, _headers, body, http_node):
+	http_node.queue_free()
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		var parsed = JSON.parse(body.get_string_from_utf8())
+		if parsed.error == OK:
+			race_questions = parsed.result["questions"]
+			num_race_questions = race_questions.size()
+		else:
+			fill_race_questions()
+	else:
+		fill_race_questions()
+	_race_loaded = true
+	_check_questions_ready()
+
+func _on_dh_response(result, response_code, _headers, body, http_node):
+	http_node.queue_free()
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		var parsed = JSON.parse(body.get_string_from_utf8())
+		if parsed.error == OK and parsed.result.has("questions"):
+			dh_questions = parsed.result["questions"]
+	_dh_loaded = true
+	_check_questions_ready()
+
+func _on_dsm_response(result, response_code, _headers, body, http_node):
+	http_node.queue_free()
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		var parsed = JSON.parse(body.get_string_from_utf8())
+		if parsed.error == OK and parsed.result.has("questions"):
+			dsm_questions = parsed.result["questions"]
+	_dsm_loaded = true
+	_check_questions_ready()
+
+func _on_er_response(result, response_code, _headers, body, http_node):
+	http_node.queue_free()
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		var parsed = JSON.parse(body.get_string_from_utf8())
+		if parsed.error == OK and parsed.result.has("questions"):
+			er_questions = parsed.result["questions"]
+	_er_loaded = true
+	_check_questions_ready()
+
+func _check_questions_ready():
+	if _labyrinth_loaded and _race_loaded and _dh_loaded and _dsm_loaded and _er_loaded:
+		questions_loaded = true
+		emit_signal("all_questions_loaded")
 
 func fill_labyrinth_questions():
 	var question1 = {}

@@ -78,6 +78,9 @@ func _ready():
 	_ret = $Player.connect("labyrinth_answerD", self , "_on_Player_answered_d")
 	
 	Global.start_session("labyrinthofrule3")
+	# Wait for questions to be fetched from the server if not ready yet
+	if not Global.questions_loaded:
+		yield(Global, "all_questions_loaded")
 	# Establecemos la pregunta y sus opciones en la interfaz de usuario.
 	set_question_hud()
 
@@ -220,15 +223,16 @@ func check_answer(answer):
 func next_question():
 	# Para proceder a la siguiente pregunta, en primer lugar pausamos el juego
 	get_tree().paused = true
-	# Una vez pausado el juego, preparamos la explicacion a mostrar
-	var explain = $CanvasLayer/Explanation/MarginContainer/VBoxContainer/TextureRect
-	explain.texture = load(Global.labyrinth_questions[Global.current_labyrinth_question]["explanation"][0])
-	# Mostramos la explicacion
-	$CanvasLayer/Explanation.visible = true
-	# Esperamos a que el usuario cierre la explicacion.
-	yield ($CanvasLayer/Explanation/MarginContainer/VBoxContainer/CloseExplanationBtn, "button_up")
-	# Dejamos de mostrar la explicacion
-	$CanvasLayer/Explanation.visible = false
+	# Mostramos la explicacion solo si existe una imagen asociada
+	# (las preguntas generadas por IA no tienen imagen de explicacion)
+	var explanation_list = Global.labyrinth_questions[Global.current_labyrinth_question].get("explanation", [])
+	var explanation_path = explanation_list[0] if explanation_list.size() > 0 else ""
+	if explanation_path != "":
+		var explain = $CanvasLayer/Explanation/MarginContainer/VBoxContainer/TextureRect
+		explain.texture = load(explanation_path)
+		$CanvasLayer/Explanation.visible = true
+		yield ($CanvasLayer/Explanation/MarginContainer/VBoxContainer/CloseExplanationBtn, "button_up")
+		$CanvasLayer/Explanation.visible = false
 	# Reanudamos el juego
 	get_tree().paused = false
 	# Avanzamos en las preguntas

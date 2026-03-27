@@ -35,9 +35,12 @@ func _ready():
 	_ret = $CanvasLayer/HUDFR.connect("race_answerB", self , "_on_Player_answered_b")
 	_ret = $CanvasLayer/HUDFR.connect("race_answerC", self , "_on_Player_answered_c")
 	_ret = $CanvasLayer/HUDFR.connect("race_answerD", self , "_on_Player_answered_d")
+	Global.start_session("fractionrace")
+	# Wait for questions to be fetched from the server if not ready yet
+	if not Global.questions_loaded:
+		yield(Global, "all_questions_loaded")
 	# Establecemos la primera pregunta
 	set_question_hud()
-	Global.start_session("fractionrace")
 
 func _enter_tree():
 	# Cada vez que la escena entre al arbol de dependencias, 

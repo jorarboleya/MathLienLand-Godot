@@ -54,6 +54,23 @@ func _physics_process(_delta):
 func question():
 	if not answer_line.editable:
 		reset_question()
+
+	# Use AI-generated questions if available
+	if Global.er_questions.size() > 0:
+		var idx = Global.er_question_index % Global.er_questions.size()
+		Global.er_question_index += 1
+		var q = Global.er_questions[idx]
+		operand1 = int(str(q["operand1"]))
+		operand2 = int(str(q["operand2"]))
+		operator = str(q["operator"])
+		correct = int(str(q["answer"]))
+		operand_one.text = str(operand1)
+		operand_two.text = str(operand2)
+		# Display "*" as "x" for readability
+		label_operator.text = "x" if operator == "*" else operator
+		answer_line.clear()
+		return
+
 	operand1 = operand()
 	operator = get_operator()
 	match operator:

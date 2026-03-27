@@ -162,6 +162,18 @@ func _on_MeteorTimer_timeout():
 
 
 func set_question():
+	# Use AI-generated questions if available
+	if Global.dsm_questions.size() > 0:
+		var idx = Global.dsm_question_index % Global.dsm_questions.size()
+		Global.dsm_question_index += 1
+		var q = Global.dsm_questions[idx]
+		cur_value = float(str(q["value"]))
+		cur_unit = str(q["unit"])
+		cur_equivalent_units.clear()
+		$CanvasLayer2/HUDDSM.set_question(str(q["question"]))
+		Global.start_question_timer()
+		return
+
 	# Escogemos un numero al azar. Sera el numero que aparezca
 	# en la pregunta.
 	# Numeros iniciales, se sobreescribiran.

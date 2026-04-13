@@ -66,6 +66,13 @@ var cur_unit
 # Unidades equivalentes a la actual.
 var cur_equivalent_units = {}
 
+# Adaptive difficulty parameters (set in _ready from server)
+# adaptive_max_distance: max unit steps allowed in a conversion (1, 3, or 6)
+# adaptive_magnitude: if not empty, restrict all questions to this magnitude category
+var adaptive_max_distance = 6
+var adaptive_magnitude = ""
+var adaptive_difficulty = 5
+
 # Funcion necesaria para anyadir los superindices
 # a las unidades que lo necesiten
 func add_superindex(text, superindex):
@@ -88,7 +95,22 @@ func _ready():
 	# Conectamos las senyales
 	var _ret = $CanvasLayer/Player.connect("correct_answer", self , "correct_answer")
 	_ret = $CanvasLayer/Player.connect("wrong_answer", self , "wrong_answer")
-	
+
+	# Fetch adaptive difficulty params before the first question
+	var params = yield(Global.fetch_adaptive_level("decimal-meteors"), "completed")
+	if params.has("max_exponent"):
+		var exp = int(params["max_exponent"])
+		if exp <= 3:
+			adaptive_max_distance = 1
+		elif exp <= 6:
+			adaptive_max_distance = 3
+		else:
+			adaptive_max_distance = 6
+	if params.has("mixed_units") and not bool(params["mixed_units"]):
+		adaptive_magnitude = magnitudes[randi() % len(magnitudes)]
+	if params.has("difficulty_level"):
+		adaptive_difficulty = int(params["difficulty_level"])
+
 	# Establecemos la pregunta a realizar.
 	set_question()
 	Global.start_session("decimalsystemmeteors")
@@ -194,19 +216,23 @@ func set_question():
 		
 		
 		# Seleccionamos una magnitud a poner en la pregunta.
-		var sel_mag = magnitudes[randi()%len(magnitudes)]
+		# Si adaptive_magnitude no está vacío, usamos siempre esa categoría.
+		var sel_mag
+		if adaptive_magnitude != "":
+			sel_mag = adaptive_magnitude
+		else:
+			sel_mag = magnitudes[randi()%len(magnitudes)]
 		# Seleccionamos la unidad de la pregunta.
 		var index_unit = randi() % (len(units[sel_mag]) - 1)
 		var sel_unit = units[sel_mag][index_unit]
-		
-		#question_number = question_number / pow(10, index_unit*units[sel_mag][-1])
-		
-		# Preparamos la respuesta.
-		# La unidad de respuesta tiene que se distinta a la
-		# unidad de la pregunta.
+
+		# Preparamos la respuesta limitando la distancia de conversión
+		# según la dificultad adaptativa.
+		var min_au = max(0, index_unit - adaptive_max_distance)
+		var max_au = min(len(units[sel_mag]) - 2, index_unit + adaptive_max_distance)
 		var answer_unit = index_unit
 		while answer_unit == index_unit:
-			answer_unit = randi() % (len(units[sel_mag]) - 1)
+			answer_unit = min_au + randi() % (max_au - min_au + 1)
 		
 		# Comprobamos la distancia entre ambas unidades.
 		var distance = answer_unit - index_unit
@@ -241,7 +267,7 @@ func set_question():
 
 func correct_answer():
 	var q_id = "dsm_" + str(Global.meteor_score)
-	Global.record_answer(q_id, true, 0)
+	Global.record_answer(q_id, true, adaptive_difficulty)
 	# Si se ha colisionado con una opcion correcta.
 	# Aumentamos la puntuacion del jugador y lo
 	# mostramos por pantalla.

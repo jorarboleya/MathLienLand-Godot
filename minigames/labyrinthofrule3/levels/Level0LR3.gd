@@ -77,13 +77,23 @@ func _ready():
 	_ret = $Player.connect("labyrinth_answerC", self , "_on_Player_answered_c")
 	_ret = $Player.connect("labyrinth_answerD", self , "_on_Player_answered_d")
 	
-	# Only start a new session on the first question (not on reloads for each question)
 	if Global.current_labyrinth_question == 0:
 		Global.start_session("labyrinthofrule3")
-	# Wait for questions to be fetched from the server if not ready yet
 	if not Global.questions_loaded:
 		yield(Global, "all_questions_loaded")
-	# Establecemos la pregunta y sus opciones en la interfaz de usuario.
+	if Global.current_labyrinth_question == 0:
+		var params = yield(Global.fetch_adaptive_level("labyrinth"), "completed")
+		if params.has("difficulty_level"):
+			Global.labyrinth_adaptive_difficulty = int(params["difficulty_level"])
+			var target = Global.labyrinth_adaptive_difficulty
+			var filtered = []
+			for q in Global.labyrinth_questions:
+				if abs(int(q.get("difficulty", 5)) - target) <= 2:
+					filtered.append(q)
+			if filtered.size() >= 3:
+				Global.labyrinth_questions = filtered
+				Global.num_labyrinth_questions = filtered.size()
+				Global.current_labyrinth_question = 0
 	set_question_hud()
 
 	
@@ -204,7 +214,7 @@ func check_answer(answer):
 	# Comprobamos si la opcion elegida es correcta.
 	var correct = Global.labyrinth_questions[Global.current_labyrinth_question][answer][1]
 	var q_id = "lr3_" + str(Global.current_labyrinth_question)
-	Global.record_answer(q_id, correct, 0)
+	Global.record_answer(q_id, correct, Global.labyrinth_adaptive_difficulty)
 	
 	# Si es correcta, procedemos a ejecutar el sonido 
 	# de opcion correcta, esperamos a que termine e iniciamos

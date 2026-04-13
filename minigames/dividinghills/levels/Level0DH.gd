@@ -21,6 +21,11 @@ var max_multiplicator = 500
 # Maximo elemento gcd que podemos generar
 # en principio.
 var max_gcd = 25
+
+# Adaptive difficulty parameters (set in _ready from server)
+var adaptive_max_gcd = 25
+var adaptive_use_gcd = true
+var adaptive_difficulty = 5
 # Diccionaro empleado para mostrar y tratar las preguntas.
 var current_question = {"type": 0, "text": "", "correct_answer": - 1,
 						"options": {"A": "", "B": "", "C": "", "D": ""}}
@@ -83,6 +88,16 @@ func _ready():
 	# el siguiente conjunto de las mismas.
 	hills.append(Vector2(0, start_height))
 	generate_hills()
+
+	# Fetch adaptive difficulty params before the first question
+	var params = yield(Global.fetch_adaptive_level("dividing-hills"), "completed")
+	if params.has("max_divisor"):
+		adaptive_max_gcd = int(params["max_divisor"])
+	if params.has("use_gcd"):
+		adaptive_use_gcd = bool(params["use_gcd"])
+	if params.has("difficulty_level"):
+		adaptive_difficulty = int(params["difficulty_level"])
+
 	# Establecemos la primera pregunta.
 	set_question()
 	
@@ -161,8 +176,8 @@ func set_question():
 		Global.dh_question_index += 1
 		_load_ai_dh_question(Global.dh_questions[idx])
 	else:
-		var selector = randi() % 2
-		if selector == 0:
+		# If adaptive params disable GCD, always use divisibility questions
+		if not adaptive_use_gcd or randi() % 2 == 0:
 			set_divisibility_criteria_question()
 		else:
 			set_gcd_question()
@@ -227,9 +242,9 @@ func set_divisibility_criteria_question():
 	current_question["options"]["D"] = ""
 
 func set_gcd_question():
-	# Obtenemos un numero aleatorio entre 
-	# 10 y max_gdc + 10 - 1.
-	var gcd = randi()%max_gcd + 10
+	# Obtenemos un numero aleatorio entre
+	# 10 y adaptive_max_gcd + 10 - 1.
+	var gcd = randi()%adaptive_max_gcd + 10
 	# Obtenemos dos numeros distintos y menores que
 	# el gcd elegido.
 	var a = 1
@@ -315,7 +330,7 @@ func _on_Player_answered_d():
 func check_answer(answer):
 	var q_id = "dh_" + str(Global.total_hills_questions)
 	var is_correct = (answer == current_question["correct_answer"])
-	Global.record_answer(q_id, is_correct, 0)
+	Global.record_answer(q_id, is_correct, adaptive_difficulty)
 	# Aumentamos en 1 el numero de preguntas respondidas.
 	Global.total_hills_questions += 1
 	# Comprobamos si en este punto el temporizador

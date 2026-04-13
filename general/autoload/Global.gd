@@ -19,6 +19,8 @@ var current_labyrinth_question = 0
 var num_labyrinth_questions = 5
 # Tiempo total que el usuario ha jugado.
 var total_labyrinth_time = 0
+# Nivel de dificultad adaptativo para el Labyrinth (se actualiza al inicio de cada sesión)
+var labyrinth_adaptive_difficulty = 5
 
 # Variable que contiene las preguntas posibles
 # para el juego de carreras
@@ -65,6 +67,37 @@ var er_questions = []   # Math Endless Runner
 var dh_question_index = 0
 var dsm_question_index = 0
 var er_question_index = 0
+
+# Fetches adaptive difficulty params for a minigame from the server.
+# Returns a dict with difficulty parameters, or {} on failure (caller uses defaults).
+# Usage: var params = yield(Global.fetch_adaptive_level("dividing-hills"), "completed")
+func fetch_adaptive_level(minigame: String):
+	var base_url = "http://localhost:8080"
+	var user_id = ""
+
+	if OS.has_feature("JavaScript"):
+		base_url = JavaScript.eval("window.location.origin")
+		var js_uid = JavaScript.eval("window.currentUserId || ''")
+		if js_uid != null:
+			user_id = str(js_uid)
+
+	if user_id == "":
+		yield(get_tree(), "idle_frame")
+		return {}
+
+	var http = HTTPRequest.new()
+	add_child(http)
+	http.request(base_url + "/api/adaptive-level/" + minigame + "/" + user_id)
+
+	var response = yield(http, "request_completed")
+	http.queue_free()
+
+	if response[0] == HTTPRequest.RESULT_SUCCESS and response[1] == 200:
+		var parsed = JSON.parse(response[3].get_string_from_utf8())
+		if parsed.error == OK and typeof(parsed.result) == TYPE_DICTIONARY:
+			return parsed.result
+
+	return {}
 
 # Fetches questions from the server; falls back to hardcoded arrays if the
 # request fails (e.g. server not running during development in the editor).

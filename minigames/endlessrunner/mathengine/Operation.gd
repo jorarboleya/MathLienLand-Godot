@@ -17,6 +17,11 @@ var correct
 var answer
 var random = RandomNumberGenerator.new()
 
+# Adaptive difficulty parameters (set by Level0MER before the first question)
+var adaptive_max_operand = 99
+var adaptive_allowed_operators = [Operators.ADD, Operators.SUBTRACT, Operators.MULTIPLY]
+var adaptive_difficulty = 5
+
 #Se crean variables que almacenen los nodos de la escena
 onready var go = $MarginContainer/Panel/GoButton
 onready var exit = $MarginContainer/Panel/ExitButton
@@ -100,15 +105,15 @@ func question():
 
 #Se genera un operando aleatorio
 func operand():
-	return random.randi_range(10,99)
+	return random.randi_range(10, adaptive_max_operand)
 
 #Se genera un operando aleatorio para multiplicacion
 func multiplicationOperand():
-	return random.randi_range(0,9)
+	return random.randi_range(0, 9)
 
 #Se genera un operador
 func get_operator():
-	return random.randi_range(0,2)
+	return adaptive_allowed_operators[random.randi_range(0, adaptive_allowed_operators.size() - 1)]
 
 #Se resetea el juego al pulsar el boton Exit
 func _on_exit_button_pressed():

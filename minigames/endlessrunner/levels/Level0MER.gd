@@ -25,7 +25,7 @@ func _ready():
 	# Obtenemos una nueva semilla para los procesos
 	# aleatorios.
 	randomize()
-	
+
 	# Iniciamos los temporizadores
 	$GameLayer/Timer.start()
 	$GameLayer/CoinsTimer.start()
@@ -36,13 +36,28 @@ func _ready():
 	_ret = $GameLayer/Player.connect("killplayer", self , "newOperation")
 	_ret = $GameLayer/Operation.connect("continuegame", self , "continue_game")
 	_ret = $GameLayer/Operation.connect("gameover", self , "game_over")
-	
+
 	# Inicializamos las variables globales.
 	Global.total_runner_time = 0
 	Global.runner_score = 0
 	Global.ncorrect_runner = 0
 
 	Global.start_session("endlessrunner")
+
+	# Fetch adaptive difficulty params and apply to Operation node
+	var params = yield(Global.fetch_adaptive_level("endless-runner"), "completed")
+	if params.has("max_operand"):
+		$GameLayer/Operation.adaptive_max_operand = int(params["max_operand"])
+	if params.has("operation_types"):
+		var ops = []
+		for t in params["operation_types"]:
+			if t == "add":   ops.append(0)
+			if t == "sub":   ops.append(1)
+			if t == "mul":   ops.append(2)
+		if ops.size() > 0:
+			$GameLayer/Operation.adaptive_allowed_operators = ops
+	if params.has("difficulty_level"):
+		$GameLayer/Operation.adaptive_difficulty = int(params["difficulty_level"])
 
 func _on_Timer_timeout():
 	# Se suma un segundo al tiempo del minijuego
@@ -90,7 +105,7 @@ func newOperation():
 	
 	
 func continue_game():
-	Global.record_answer("mer_" + str(Global.ncorrect_runner), true, 0)
+	Global.record_answer("mer_" + str(Global.ncorrect_runner), true, $GameLayer/Operation.adaptive_difficulty)
 	# Esta funcion se llama tras la correcta contestacion
 	# a la operacion formulada. Se encarda de reanudar el juego,
 	# reiniciando los temporizadores de spawn, mostrando al jugador
@@ -107,7 +122,7 @@ func continue_game():
 	
 	
 func game_over():
-	Global.record_answer("mer_" + str(Global.ncorrect_runner), false, 0)
+	Global.record_answer("mer_" + str(Global.ncorrect_runner), false, $GameLayer/Operation.adaptive_difficulty)
 	# Si se ha concluido el minijuego, pasamos  a la escena final.
 	var _ret = get_tree().change_scene("res://minigames/endlessrunner/ui/EndScreenMER.tscn")
 

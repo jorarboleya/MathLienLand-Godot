@@ -140,7 +140,7 @@ func _on_labyrinth_response(result, response_code, _headers, body, http_node):
 		var parsed = JSON.parse(body.get_string_from_utf8())
 		if parsed.error == OK:
 			labyrinth_questions = parsed.result["questions"]
-			num_labyrinth_questions = labyrinth_questions.size()
+			num_labyrinth_questions = min(labyrinth_questions.size(), 5)
 		else:
 			fill_labyrinth_questions()
 	else:

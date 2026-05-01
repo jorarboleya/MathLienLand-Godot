@@ -113,7 +113,7 @@ func _ready():
 
 	# Establecemos la pregunta a realizar.
 	set_question()
-	Global.start_session("decimalsystemmeteors")
+	Global.start_session("decimal-meteors")
 
 
 func _on_MeteorTimer_timeout():
@@ -288,6 +288,8 @@ func correct_answer():
 		$MeteorTimer.wait_time -= step_apparition_meteors
 
 func wrong_answer():
+	var q_id = "dsm_" + str(Global.meteor_score)
+	Global.record_answer(q_id, false, adaptive_difficulty)
 	# Si se trata de una colision con una opcion incorrecta
 	# y aun tiene alguna vida extra.
 	if lives > 0:

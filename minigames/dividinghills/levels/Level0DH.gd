@@ -8,7 +8,7 @@ export(int) var hill_slices = 10
 # Altura maxima de una colina.
 export(int) var hill_height_range = 150
 # Maximo preguntas que se haran en el juego
-export(int) var max_questions = 15
+export(int) var max_questions = 5
 # Escena que representa al objeto coleccionable
 export(PackedScene) var collectible
 #Textura de las colinas
@@ -44,7 +44,7 @@ var time = 0
 var restart_timer = false
 
 func _ready():
-	Global.start_session("dividinghills")
+	Global.start_session("dividing-hills")
 	# En primer lugar, cuando la escena entre al 
 	# arbol de dependencias tendremos que resetar 
 	# todos los contadores.

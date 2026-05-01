@@ -78,7 +78,7 @@ func _ready():
 	_ret = $Player.connect("labyrinth_answerD", self , "_on_Player_answered_d")
 	
 	if Global.current_labyrinth_question == 0:
-		Global.start_session("labyrinthofrule3")
+		Global.start_session("labyrinth")
 	if not Global.questions_loaded:
 		yield(Global, "all_questions_loaded")
 	if Global.current_labyrinth_question == 0:
@@ -92,7 +92,7 @@ func _ready():
 					filtered.append(q)
 			if filtered.size() >= 3:
 				Global.labyrinth_questions = filtered
-				Global.num_labyrinth_questions = filtered.size()
+				Global.num_labyrinth_questions = min(filtered.size(), 5)
 				Global.current_labyrinth_question = 0
 	set_question_hud()
 

@@ -42,7 +42,7 @@ func _ready():
 	Global.runner_score = 0
 	Global.ncorrect_runner = 0
 
-	Global.start_session("endlessrunner")
+	Global.start_session("endless-runner")
 
 	# Fetch adaptive difficulty params and apply to Operation node
 	var params = yield(Global.fetch_adaptive_level("endless-runner"), "completed")

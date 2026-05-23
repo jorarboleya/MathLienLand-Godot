@@ -60,20 +60,10 @@ func question():
 	if not answer_line.editable:
 		reset_question()
 
-	# Use AI-generated questions if available
-	if Global.er_questions.size() > 0:
-		var idx = Global.er_question_index % Global.er_questions.size()
-		Global.er_question_index += 1
-		var q = Global.er_questions[idx]
-		operand1 = int(str(q["operand1"]))
-		operand2 = int(str(q["operand2"]))
-		operator = str(q["operator"])
-		correct = int(str(q["answer"]))
-		operand_one.text = str(operand1)
-		operand_two.text = str(operand2)
-		# Display "*" as "x" for readability
-		label_operator.text = "x" if operator == "*" else operator
-		answer_line.clear()
+	# Use AI-generated questions only when they match the current adaptive level.
+	var ai_question = _get_adaptive_ai_question()
+	if ai_question != null:
+		_apply_ai_question(ai_question)
 		return
 
 	operand1 = operand()
@@ -114,6 +104,58 @@ func multiplicationOperand():
 #Se genera un operador
 func get_operator():
 	return adaptive_allowed_operators[random.randi_range(0, adaptive_allowed_operators.size() - 1)]
+
+func _get_adaptive_ai_question():
+	if Global.er_questions.size() == 0:
+		return null
+	for _i in range(Global.er_questions.size()):
+		var idx = Global.er_question_index % Global.er_questions.size()
+		Global.er_question_index += 1
+		var q = Global.er_questions[idx]
+		if _is_ai_question_allowed(q):
+			return q
+	return null
+
+func _apply_ai_question(q):
+	operand1 = int(str(q["operand1"]))
+	operand2 = int(str(q["operand2"]))
+	operator = str(q["operator"])
+	correct = int(str(q["answer"]))
+	operand_one.text = str(operand1)
+	operand_two.text = str(operand2)
+	# Display "*" as "x" for readability
+	label_operator.text = "x" if operator == "*" else operator
+	answer_line.clear()
+
+func _is_ai_question_allowed(q):
+	if not q.has("operand1") or not q.has("operand2") or not q.has("operator") or not q.has("answer"):
+		return false
+	var op = _operator_enum_from_string(str(q["operator"]))
+	if op == null or not adaptive_allowed_operators.has(op):
+		return false
+	var a = int(str(q["operand1"]))
+	var b = int(str(q["operand2"]))
+	var ans = int(str(q["answer"]))
+	if a < 10 or a > adaptive_max_operand:
+		return false
+	match op:
+		Operators.ADD:
+			return b >= 10 and b <= adaptive_max_operand and a + b == ans
+		Operators.SUBTRACT:
+			return b >= 10 and b <= adaptive_max_operand and a >= b and a - b == ans
+		Operators.MULTIPLY:
+			return b >= 0 and b <= 9 and a * b == ans
+	return false
+
+func _operator_enum_from_string(op):
+	match op:
+		"+":
+			return Operators.ADD
+		"-":
+			return Operators.SUBTRACT
+		"*", "x", "X":
+			return Operators.MULTIPLY
+	return null
 
 #Se resetea el juego al pulsar el boton Exit
 func _on_exit_button_pressed():

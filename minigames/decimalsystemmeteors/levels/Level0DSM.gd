@@ -195,19 +195,10 @@ func _on_MeteorTimer_timeout():
 
 
 func set_question():
-	# Use AI-generated questions if available
-	if Global.dsm_questions.size() > 0:
-		var idx = Global.dsm_question_index % Global.dsm_questions.size()
-		Global.dsm_question_index += 1
-		var q = Global.dsm_questions[idx]
-		cur_value = float(str(q["value"]))
-		cur_unit = str(q["unit"])
-		cur_equivalent_units.clear()
-		var eq = equivalents.get(cur_unit)
-		if eq != null:
-			cur_equivalent_units[eq] = true
-		$CanvasLayer2/HUDDSM.set_question(str(q["question"]))
-		Global.start_question_timer()
+	# Use AI-generated questions only when they match the current adaptive level.
+	var ai_question = _get_adaptive_ai_question()
+	if ai_question != null:
+		_apply_ai_question(ai_question)
 		return
 
 	# Escogemos un numero al azar. Sera el numero que aparezca
@@ -278,6 +269,102 @@ func set_question():
 				cur_equivalent_units.clear()
 
 	Global.start_question_timer()
+
+func _get_adaptive_ai_question():
+	if Global.dsm_questions.size() == 0:
+		return null
+	for _i in range(Global.dsm_questions.size()):
+		var idx = Global.dsm_question_index % Global.dsm_questions.size()
+		Global.dsm_question_index += 1
+		var q = Global.dsm_questions[idx]
+		if _is_ai_question_allowed(q):
+			return q
+	return null
+
+func _apply_ai_question(q):
+	cur_value = float(str(q["value"]))
+	cur_unit = str(q["unit"]).strip_edges().to_lower()
+	cur_equivalent_units.clear()
+	var eq = equivalents.get(cur_unit)
+	if eq != null:
+		cur_equivalent_units[eq] = true
+	$CanvasLayer2/HUDDSM.set_question(str(q["question"]))
+	Global.start_question_timer()
+
+func _is_ai_question_allowed(q):
+	var info = _get_ai_question_info(q)
+	if info.size() == 0:
+		return false
+	if adaptive_magnitude != "" and info["magnitude"] != adaptive_magnitude:
+		return false
+	return int(info["distance"]) <= adaptive_max_distance
+
+func _get_ai_question_info(q):
+	if not q.has("question") or not q.has("value") or not q.has("unit"):
+		return {}
+	var parsed = _parse_ai_question_text(str(q["question"]))
+	if parsed.size() == 0:
+		return {}
+	var from_info = _get_unit_info(parsed["unit"])
+	var to_info = _get_unit_info(str(q["unit"]))
+	if from_info.size() == 0 or to_info.size() == 0:
+		return {}
+	if from_info["magnitude"] != to_info["magnitude"]:
+		return {}
+	var distance = int(to_info["index"]) - int(from_info["index"])
+	var exponent = units[from_info["magnitude"]][-1]
+	var expected = float(parsed["value"]) / pow(10, distance * exponent)
+	if abs(expected - float(str(q["value"]))) > 0.000001:
+		return {}
+	return {
+		"magnitude": from_info["magnitude"],
+		"distance": abs(distance)
+	}
+
+func _parse_ai_question_text(question_text):
+	var text = str(question_text).strip_edges()
+	var unit_start = -1
+	for i in range(text.length()):
+		var character = text.substr(i, 1)
+		if "0123456789.".find(character) == -1:
+			unit_start = i
+			break
+	if unit_start <= 0:
+		return {}
+	var number_text = text.substr(0, unit_start).strip_edges()
+	var unit_text = text.substr(unit_start, text.length() - unit_start).strip_edges().to_lower()
+	if not _is_valid_decimal_number(number_text) or unit_text == "":
+		return {}
+	return {
+		"value": float(number_text),
+		"unit": unit_text
+	}
+
+func _is_valid_decimal_number(number_text):
+	var digits = 0
+	var dots = 0
+	for i in range(number_text.length()):
+		var character = number_text.substr(i, 1)
+		if "0123456789".find(character) != -1:
+			digits += 1
+		elif character == ".":
+			dots += 1
+			if dots > 1:
+				return false
+		else:
+			return false
+	return digits > 0
+
+func _get_unit_info(unit_text):
+	var normalized = str(unit_text).strip_edges().to_lower()
+	for magn in magnitudes:
+		for i in range(len(units[magn]) - 1):
+			if str(units[magn][i]).strip_edges().to_lower() == normalized:
+				return {
+					"magnitude": magn,
+					"index": i
+				}
+	return {}
 
 func correct_answer():
 	var q_id = "dsm_" + str(Global.meteor_score)

@@ -100,7 +100,16 @@ func _ready():
 	var _ret = $CanvasLayer/Player.connect("correct_answer", self , "correct_answer")
 	_ret = $CanvasLayer/Player.connect("wrong_answer", self , "wrong_answer")
 
-	# Fetch adaptive difficulty params before the first question
+	# Mostramos la primera pregunta INMEDIATAMENTE (con parámetros adaptativos
+	# por defecto) y arrancamos el timer, para que la UI nunca se quede colgada
+	# en el placeholder "XXX cm³" aunque el servidor tarde o falle al responder
+	# fetch_adaptive_level. Los parámetros adaptativos se aplican abajo y
+	# afectarán a las siguientes preguntas.
+	set_question()
+	$MeteorTimer.start()
+	Global.start_session("decimal-meteors")
+
+	# Fetch adaptive difficulty params en background; afectan a las siguientes preguntas.
 	var params = yield(Global.fetch_adaptive_level("decimal-meteors"), "completed")
 	if params.has("max_exponent"):
 		var exp = int(params["max_exponent"])
@@ -114,11 +123,6 @@ func _ready():
 		adaptive_magnitude = magnitudes[randi() % len(magnitudes)]
 	if params.has("difficulty_level"):
 		adaptive_difficulty = int(params["difficulty_level"])
-
-	# Establecemos la pregunta a realizar y arrancamos el timer.
-	set_question()
-	$MeteorTimer.start()
-	Global.start_session("decimal-meteors")
 
 
 func _on_MeteorTimer_timeout():

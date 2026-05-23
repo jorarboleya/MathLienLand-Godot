@@ -46,9 +46,16 @@ func _ready():
 	_ret = $CanvasLayer/HUDFR.connect("race_answerD", self , "_on_Player_answered_d")
 	# Nombre canónico (ALLOWED_MINIGAMES en el servidor usa "fraction-race")
 	Global.start_session("fraction-race")
-	# Wait for questions to be fetched from the server if not ready yet
-	if not Global.questions_loaded:
-		yield(Global, "all_questions_loaded")
+	# Si las preguntas aún no se han cargado, esperamos a la señal pero también
+	# nos protegemos por si todo el sistema de fetch fallara: si tras un timeout
+	# corto seguimos sin preguntas, usamos el fallback hardcoded síncronamente.
+	if Global.race_questions.size() == 0:
+		if not Global.questions_loaded:
+			yield(Global, "all_questions_loaded")
+		# Defensa final: si tras esperar siguen vacías, forzamos el fallback.
+		if Global.race_questions.size() == 0:
+			Global.fill_race_questions()
+			Global.num_race_questions = Global.race_questions.size()
 	# Establecemos la primera pregunta y habilitamos los botones.
 	set_question_hud()
 	hbox.get_node("answerA").disabled = false

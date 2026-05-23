@@ -94,7 +94,14 @@ func _ready():
 	hills.append(Vector2(0, start_height))
 	generate_hills()
 
-	# Fetch adaptive difficulty params before the first question
+	# Inicializamos la primera pregunta con parámetros por defecto y permitimos
+	# el movimiento INMEDIATAMENTE, para que el jugador nunca se quede bloqueado
+	# si fetch_adaptive_level tarda o falla. Los parámetros adaptativos se
+	# aplican abajo y afectan a las siguientes preguntas.
+	set_question()
+	can_move = true
+
+	# Fetch adaptive difficulty params en background.
 	var params = yield(Global.fetch_adaptive_level("dividing-hills"), "completed")
 	if params.has("max_divisor"):
 		adaptive_max_gcd = int(params["max_divisor"])
@@ -102,10 +109,6 @@ func _ready():
 		adaptive_use_gcd = bool(params["use_gcd"])
 	if params.has("difficulty_level"):
 		adaptive_difficulty = int(params["difficulty_level"])
-
-	# Establecemos la primera pregunta y permitimos el movimiento.
-	set_question()
-	can_move = true
 
 
 func _process(_delta):

@@ -92,6 +92,13 @@ func _ready():
 		# filtrados previos (Global persiste entre escenas como autoload).
 		Global.labyrinth_questions = Global._labyrinth_questions_master.duplicate(true)
 		Global.num_labyrinth_questions = min(Global.labyrinth_questions.size(), 5)
+	# Mostramos la primera pregunta y desbloqueamos el movimiento INMEDIATAMENTE
+	# tras tener el set base de preguntas. fetch_adaptive_level se ejecuta en
+	# background; el filtro adaptativo solo afectará si vuelve a empezarse el
+	# juego (current_labyrinth_question == 0 de nuevo).
+	set_question_hud()
+	$Player.move_allowed = true
+	if Global.current_labyrinth_question == 0:
 		var params = yield(Global.fetch_adaptive_level("labyrinth"), "completed")
 		if params.has("difficulty_level"):
 			Global.labyrinth_adaptive_difficulty = int(params["difficulty_level"])
@@ -103,9 +110,6 @@ func _ready():
 			if filtered.size() >= 3:
 				Global.labyrinth_questions = filtered
 				Global.num_labyrinth_questions = min(filtered.size(), 5)
-				Global.current_labyrinth_question = 0
-	set_question_hud()
-	$Player.move_allowed = true
 
 	
 func _enter_tree():

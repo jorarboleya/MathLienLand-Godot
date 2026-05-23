@@ -13,6 +13,10 @@ var _er_loaded = false
 
 # Variable que contiene las preguntas posibles
 var labyrinth_questions = []
+# Copia inmutable del set original (servidor o fallback). Se usa para que el
+# filtro adaptativo de Level0LR3 no compounda filtrados entre partidas seguidas
+# en la misma carga de página (Global es autoload y persiste entre escenas).
+var _labyrinth_questions_master = []
 # Variable que indica que cuestion debe ser propuesta
 var current_labyrinth_question = 0
 # Maximo de preguntas disponibles
@@ -136,29 +140,38 @@ func _fetch_questions():
 
 func _on_labyrinth_response(result, response_code, _headers, body, http_node):
 	http_node.queue_free()
+	var used_server = false
 	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
 		var parsed = JSON.parse(body.get_string_from_utf8())
-		if parsed.error == OK:
-			labyrinth_questions = parsed.result["questions"]
-			num_labyrinth_questions = min(labyrinth_questions.size(), 5)
-		else:
-			fill_labyrinth_questions()
-	else:
+		if parsed.error == OK and typeof(parsed.result) == TYPE_DICTIONARY:
+			var qs = parsed.result.get("questions", [])
+			if qs is Array and qs.size() > 0:
+				labyrinth_questions = qs
+				num_labyrinth_questions = min(labyrinth_questions.size(), 5)
+				used_server = true
+	if not used_server:
 		fill_labyrinth_questions()
+		num_labyrinth_questions = min(labyrinth_questions.size(), 5)
+	# Guardamos la copia maestra inmutable para que el filtro adaptativo
+	# de Level0LR3 no compounde filtrados entre repeticiones del juego.
+	_labyrinth_questions_master = labyrinth_questions.duplicate(true)
 	_labyrinth_loaded = true
 	_check_questions_ready()
 
 func _on_race_response(result, response_code, _headers, body, http_node):
 	http_node.queue_free()
+	var used_server = false
 	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
 		var parsed = JSON.parse(body.get_string_from_utf8())
-		if parsed.error == OK:
-			race_questions = parsed.result["questions"]
-			num_race_questions = race_questions.size()
-		else:
-			fill_race_questions()
-	else:
+		if parsed.error == OK and typeof(parsed.result) == TYPE_DICTIONARY:
+			var qs = parsed.result.get("questions", [])
+			if qs is Array and qs.size() > 0:
+				race_questions = qs
+				num_race_questions = race_questions.size()
+				used_server = true
+	if not used_server:
 		fill_race_questions()
+		num_race_questions = race_questions.size()
 	_race_loaded = true
 	_check_questions_ready()
 

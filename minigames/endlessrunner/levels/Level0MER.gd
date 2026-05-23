@@ -58,6 +58,10 @@ func _ready():
 			$GameLayer/Operation.adaptive_allowed_operators = ops
 	if params.has("difficulty_level"):
 		$GameLayer/Operation.adaptive_difficulty = int(params["difficulty_level"])
+	# Regeneramos la primera pregunta con los parámetros adaptativos ya aplicados.
+	# Operation._ready() la generó antes con valores por defecto porque los nodos
+	# hijos hacen _ready() antes que el padre.
+	$GameLayer/Operation.question()
 
 func _on_Timer_timeout():
 	# Se suma un segundo al tiempo del minijuego

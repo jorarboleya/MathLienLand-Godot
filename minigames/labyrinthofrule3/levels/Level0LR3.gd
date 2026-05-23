@@ -77,11 +77,21 @@ func _ready():
 	_ret = $Player.connect("labyrinth_answerC", self , "_on_Player_answered_c")
 	_ret = $Player.connect("labyrinth_answerD", self , "_on_Player_answered_d")
 	
+	# Bloqueamos el movimiento del jugador hasta que las preguntas estén cargadas,
+	# evitando que pueda recolectar un pickup de respuesta antes de tiempo, lo que
+	# provocaría un crash en check_answer al acceder a Global.labyrinth_questions[0]
+	# con el array todavía vacío.
+	$Player.move_allowed = false
 	if Global.current_labyrinth_question == 0:
 		Global.start_session("labyrinth")
 	if not Global.questions_loaded:
 		yield(Global, "all_questions_loaded")
 	if Global.current_labyrinth_question == 0:
+		# Restauramos el set maestro inmutable ANTES de filtrar, para que las
+		# repeticiones del juego en la misma carga de página no compounden
+		# filtrados previos (Global persiste entre escenas como autoload).
+		Global.labyrinth_questions = Global._labyrinth_questions_master.duplicate(true)
+		Global.num_labyrinth_questions = min(Global.labyrinth_questions.size(), 5)
 		var params = yield(Global.fetch_adaptive_level("labyrinth"), "completed")
 		if params.has("difficulty_level"):
 			Global.labyrinth_adaptive_difficulty = int(params["difficulty_level"])
@@ -95,6 +105,7 @@ func _ready():
 				Global.num_labyrinth_questions = min(filtered.size(), 5)
 				Global.current_labyrinth_question = 0
 	set_question_hud()
+	$Player.move_allowed = true
 
 	
 func _enter_tree():
@@ -206,11 +217,14 @@ func _on_Player_answered_d():
 
 func check_answer(answer):
 	# Funcion para comprobar si la opcion elegida ha sido la
-	# correcta. 
+	# correcta.
 	# Comprobamos que la clave indicada sea valida.
 	if not answer in answers:
 		return
-	
+	# Guardia defensiva: si las preguntas aún no se han cargado, ignoramos la respuesta.
+	if Global.labyrinth_questions.size() == 0 or Global.current_labyrinth_question >= Global.labyrinth_questions.size():
+		return
+
 	# Comprobamos si la opcion elegida es correcta.
 	var correct = Global.labyrinth_questions[Global.current_labyrinth_question][answer][1]
 	var q_id = "lr3_" + str(Global.current_labyrinth_question)

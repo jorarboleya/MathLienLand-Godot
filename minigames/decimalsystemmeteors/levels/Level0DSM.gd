@@ -84,11 +84,15 @@ func _ready():
 	# Nos aseguramos de generar una nueva semilla para
 	# los sucesos aleatorios cada vez.
 	randomize()
+	# Detenemos el timer hasta que la primera pregunta esté lista,
+	# evitando que _on_MeteorTimer_timeout se ejecute con cur_unit = null
+	# (lo que provoca un bucle infinito al acumularse 5 disparos sin respuesta).
+	$MeteorTimer.stop()
 	# Establecemos correctamente las unidades que tendremos
 	# en cuenta.
 	for j in range(len(units["area"]) - 1):
 		units["area"][j] = add_superindex(units["area"][j], SQ_EXP)
-	
+
 	for j in range(len(units["vol"]) - 1):
 		units["vol"][j] = add_superindex(units["vol"][j], CUBIC_EXP)
 
@@ -111,12 +115,15 @@ func _ready():
 	if params.has("difficulty_level"):
 		adaptive_difficulty = int(params["difficulty_level"])
 
-	# Establecemos la pregunta a realizar.
+	# Establecemos la pregunta a realizar y arrancamos el timer.
 	set_question()
+	$MeteorTimer.start()
 	Global.start_session("decimal-meteors")
 
 
 func _on_MeteorTimer_timeout():
+	if cur_unit == null or cur_unit == "":
+		return
 	# Idea plenamente obtenida de:
 	# https://www.youtube.com/watch?v=TKpTvpeHh3U
 	# Establecemos un punto aleatorio de spawn de la instancia.
@@ -191,7 +198,10 @@ func set_question():
 		var q = Global.dsm_questions[idx]
 		cur_value = float(str(q["value"]))
 		cur_unit = str(q["unit"])
-		cur_equivalent_units.clear()
+		if equivalents.get(cur_unit) != null:
+			cur_equivalent_units = {equivalents.get(cur_unit): true}
+		else:
+			cur_equivalent_units.clear()
 		$CanvasLayer2/HUDDSM.set_question(str(q["question"]))
 		Global.start_question_timer()
 		return
@@ -288,6 +298,8 @@ func correct_answer():
 		$MeteorTimer.wait_time -= step_apparition_meteors
 
 func wrong_answer():
+	if not can_move:
+		return
 	var q_id = "dsm_" + str(Global.meteor_score)
 	Global.record_answer(q_id, false, adaptive_difficulty)
 	# Si se trata de una colision con una opcion incorrecta

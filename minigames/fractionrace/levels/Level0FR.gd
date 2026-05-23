@@ -29,18 +29,32 @@ func _ready():
 	randomize()
 	# Tambien debemos establecer los limites de la camara
 	set_camera_limits()
+	# Deshabilitamos los botones de respuesta hasta que las preguntas estén
+	# cargadas, para que el jugador no pueda hacer clic durante la cuenta atrás
+	# y disparar check_answer() con Global.race_questions todavía vacío
+	# (lo que provocaría un crash por índice fuera de rango).
+	var hbox = $CanvasLayer/HUDFR/Panel/HBoxContainer/QuestionMargin/VBoxContainer/HBoxContainer
+	hbox.get_node("answerA").disabled = true
+	hbox.get_node("answerB").disabled = true
+	hbox.get_node("answerC").disabled = true
+	hbox.get_node("answerD").disabled = true
 	# Conectamos las senyales de contestacion
 	var _ret
 	_ret = $CanvasLayer/HUDFR.connect("race_answerA", self , "_on_Player_answered_a")
 	_ret = $CanvasLayer/HUDFR.connect("race_answerB", self , "_on_Player_answered_b")
 	_ret = $CanvasLayer/HUDFR.connect("race_answerC", self , "_on_Player_answered_c")
 	_ret = $CanvasLayer/HUDFR.connect("race_answerD", self , "_on_Player_answered_d")
-	Global.start_session("fractionrace")
+	# Nombre canónico (ALLOWED_MINIGAMES en el servidor usa "fraction-race")
+	Global.start_session("fraction-race")
 	# Wait for questions to be fetched from the server if not ready yet
 	if not Global.questions_loaded:
 		yield(Global, "all_questions_loaded")
-	# Establecemos la primera pregunta
+	# Establecemos la primera pregunta y habilitamos los botones.
 	set_question_hud()
+	hbox.get_node("answerA").disabled = false
+	hbox.get_node("answerB").disabled = false
+	hbox.get_node("answerC").disabled = false
+	hbox.get_node("answerD").disabled = false
 
 func _enter_tree():
 	# Cada vez que la escena entre al arbol de dependencias, 
@@ -146,9 +160,12 @@ func _on_Player_answered_d():
 
 func check_answer(answer):
 	# Funcion para comprobar si la opcion elegida ha sido la
-	# correcta. 
+	# correcta.
 	# Comprobamos que la clave indicada sea valida.
 	if not answer in answers:
+		return
+	# Guardia defensiva: si las preguntas aún no se han cargado, ignoramos la respuesta.
+	if Global.race_questions.size() == 0 or Global.current_race_question >= Global.race_questions.size():
 		return
 
 	# Comprobamos si la opcion elegida es correcta.

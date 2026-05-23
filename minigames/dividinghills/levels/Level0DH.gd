@@ -44,9 +44,14 @@ var time = 0
 var restart_timer = false
 
 func _ready():
+	# Bloqueamos el movimiento del jugador hasta que la primera pregunta
+	# esté lista, para que no pueda recolectar un cofre y disparar
+	# pop_up_question() con current_question todavía sin inicializar
+	# (lo que mostraría una pregunta vacía y registraría un fallo fantasma).
+	can_move = false
 	Global.start_session("dividing-hills")
-	# En primer lugar, cuando la escena entre al 
-	# arbol de dependencias tendremos que resetar 
+	# En primer lugar, cuando la escena entre al
+	# arbol de dependencias tendremos que resetar
 	# todos los contadores.
 	# Contador de preguntas acertadas
 	Global.ncorrect_hills = 0
@@ -56,7 +61,7 @@ func _ready():
 	Global.total_hills_time = 0
 	# Establecemos musica.
 	MusicController.set_music()
-	# Generamos una nueva semilla para los procesos 
+	# Generamos una nueva semilla para los procesos
 	# aleatoreos.
 	randomize()
 	# Conectamos las senyales de contestacion
@@ -98,9 +103,11 @@ func _ready():
 	if params.has("difficulty_level"):
 		adaptive_difficulty = int(params["difficulty_level"])
 
-	# Establecemos la primera pregunta.
+	# Establecemos la primera pregunta y permitimos el movimiento.
 	set_question()
-	
+	can_move = true
+
+
 func _process(_delta):
 	# Obtenemos las coordinadas del ultimo punto
 	# perteneciente al contorno de las colinas.

@@ -112,10 +112,10 @@ func _ready():
 	# Fetch adaptive difficulty params en background; afectan a las siguientes preguntas.
 	var params = yield(Global.fetch_adaptive_level("decimal-meteors"), "completed")
 	if params.has("max_exponent"):
-		var exp = int(params["max_exponent"])
-		if exp <= 3:
+		var max_exp = int(params["max_exponent"])
+		if max_exp <= 3:
 			adaptive_max_distance = 1
-		elif exp <= 6:
+		elif max_exp <= 6:
 			adaptive_max_distance = 3
 		else:
 			adaptive_max_distance = 6
@@ -202,10 +202,10 @@ func set_question():
 		var q = Global.dsm_questions[idx]
 		cur_value = float(str(q["value"]))
 		cur_unit = str(q["unit"])
-		if equivalents.get(cur_unit) != null:
-			cur_equivalent_units = {equivalents.get(cur_unit): true}
-		else:
-			cur_equivalent_units.clear()
+		cur_equivalent_units.clear()
+		var eq = equivalents.get(cur_unit)
+		if eq != null:
+			cur_equivalent_units[eq] = true
 		$CanvasLayer2/HUDDSM.set_question(str(q["question"]))
 		Global.start_question_timer()
 		return

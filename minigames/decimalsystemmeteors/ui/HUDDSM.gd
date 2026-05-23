@@ -1,5 +1,12 @@
 extends Control
 
+func _ready():
+	# Forzamos un texto neutro al cargar la escena, para que aunque
+	# Level0DSM.set_question() falle o tarde, el jugador nunca vea
+	# el placeholder "XXX cm³" del editor.
+	var question = $Panel/HBoxContainer/QuestionMargin/Question
+	question.bbcode_text = "[center]Loading...[/center]"
+
 func _on_BackBtn_button_up():
 	# Si el usuario desea volver a la pantalla de inicio del
 	# juego, reseteamos las variables que controlan la aparicion

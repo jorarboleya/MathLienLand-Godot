@@ -166,12 +166,8 @@ size_flags_horizontal = 3
 custom_fonts/bold_font = SubResource( 28 )
 custom_fonts/normal_font = SubResource( 29 )
 bbcode_enabled = true
-bbcode_text = "
-[center]What is equivalent to:
-[color=blue]XXX cm[sup][b]3[/b][/sup][/color]?[/center]"
-text = "
-What is equivalent to:
-XXX cm3?"
+bbcode_text = "[center]Loading...[/center]"
+text = "Loading..."
 custom_effects = [ SubResource( 30 ) ]
 
 [node name="PauseBtnMargin" type="MarginContainer" parent="Panel/HBoxContainer"]

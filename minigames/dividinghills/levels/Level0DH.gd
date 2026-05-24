@@ -180,11 +180,10 @@ func set_question():
 	var node_c = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/HBoxContainer/C
 	var node_d = $CanvasLayer/HUDDH/MarginContainer/Panel/MarginContainer/VBoxContainer/HBoxContainer/D
 
-	# Use AI-generated questions if available; otherwise generate procedurally
-	if Global.dh_questions.size() > 0:
-		var idx = Global.dh_question_index % Global.dh_questions.size()
-		Global.dh_question_index += 1
-		_load_ai_dh_question(Global.dh_questions[idx])
+	# Use AI-generated questions only when they match the current adaptive level.
+	var ai_question = _get_adaptive_ai_question()
+	if ai_question != null:
+		_load_ai_dh_question(ai_question)
 	else:
 		# If adaptive params disable GCD, always use divisibility questions
 		if not adaptive_use_gcd or randi() % 2 == 0:
@@ -221,6 +220,39 @@ func _load_ai_dh_question(q):
 		current_question["options"]["D"] = str(q["options"]["D"])
 		# correct_answer is the actual GCD integer
 		current_question["correct_answer"] = int(str(q["options"][str(q["answer"])]))
+
+func _get_adaptive_ai_question():
+	if Global.dh_questions.size() == 0:
+		return null
+	for _i in range(Global.dh_questions.size()):
+		var idx = Global.dh_question_index % Global.dh_questions.size()
+		Global.dh_question_index += 1
+		var q = Global.dh_questions[idx]
+		if _is_ai_question_allowed(q):
+			return q
+	return null
+
+func _is_ai_question_allowed(q):
+	if not q.has("type") or not q.has("text") or not q.has("answer") or not q.has("options"):
+		return false
+	# options must be a Dictionary; a JSON null or array would crash .has() calls below
+	if not q["options"] is Dictionary:
+		return false
+	var q_type = int(q["type"])
+	if q_type == 0:
+		return q["options"].has("A") and q["options"].has("B")
+	if q_type == 1:
+		if not adaptive_use_gcd:
+			return false
+		# All four display options plus the marked answer key must exist.
+		# Server validation only checks the marked answer, not that C/D are present.
+		var opts = q["options"]
+		var ans_key = str(q["answer"])
+		if not (opts.has("A") and opts.has("B") and opts.has("C") and opts.has("D") and opts.has(ans_key)):
+			return false
+		var gcd_value = int(str(opts[ans_key]))
+		return gcd_value <= adaptive_max_gcd
+	return false
 
 func set_divisibility_criteria_question():
 	# Seleccionamos aleatoriamente uno de los 

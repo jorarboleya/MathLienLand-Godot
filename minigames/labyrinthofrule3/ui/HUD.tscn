@@ -144,11 +144,12 @@ margin_top = 20.0
 margin_right = 595.0
 margin_bottom = 108.0
 size_flags_horizontal = 3
-size_flags_vertical = 1
+size_flags_vertical = 3
 custom_fonts/font = SubResource( 12 )
 text = "Lore Ipsum"
 align = 1
-valign = 1
+valign = 0
+autowrap = true
 
 [node name="PauseBtnMargin" type="MarginContainer" parent="Panel/HBoxContainer"]
 margin_left = 859.0
